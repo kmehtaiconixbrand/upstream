@@ -1,0 +1,290 @@
+msgid ""
+msgstr "MIME-Version: 1.0\n"
+
+#. Name.
+msgid "HTML Page Sitemap"
+msgstr ""
+
+#. Short description.
+msgid "Adds an HTML (Not XML) sitemap of your pages (not posts) by entering the shortcode [html_sitemap], perfect for those who use WordPress as a CMS."
+msgstr ""
+
+#. Screenshot description.
+msgid "HTML Page Sitemap in the Default WordPress theme."
+msgstr ""
+
+#. Found in description header.
+msgid "Examples"
+msgstr ""
+
+#. Found in description header.
+msgid "ATTENTION: HTML-SITEMAP SHORTCODE HAS CHANGED"
+msgstr ""
+
+#. Found in description list item.
+msgid "<code>ordered_list_type=\"1\"</code> - The list items will be numbered with numbers"
+msgstr ""
+
+#. Found in description list item.
+msgid "<code>ordered_list_type=\"A\"</code> - The list items will be numbered with uppercase letters"
+msgstr ""
+
+#. Found in description list item.
+msgid "<code>ordered_list_type=\"a\"</code> - The list items will be numbered with lowercase letters"
+msgstr ""
+
+#. Found in description list item.
+msgid "<code>ordered_list_type=\"I\"</code> - The list items will be numbered with uppercase roman numbers"
+msgstr ""
+
+#. Found in description list item.
+msgid "<code>ordered_list_type=\"i\"</code> - The list items will be numbered with lowercase roman numbers"
+msgstr ""
+
+#. Found in description paragraph.
+msgid "This simple plugin adds an HTML (Not XML) sitemap of your pages (not posts) by entering the shortcode [html_sitemap] in the page content. This simple plugin is configured with the <code>[html_sitemap]</code> shortcode. This plugin can display a sitemap with specific depths, from a specific parent page and include/exclude specific children. Shortcode attributes include <code>sort_column</code>, <code>sort_order</code>, <code>exclude</code>, <code>include</code>, <code>depth</code>, <code>child_of</code>, <code>meta_key</code>, <code>meta_value</code>, <code>authors</code>, <code>number</code>,  <code>offset</code>, <code>post_type</code>,  and <code>post_status</code>, everything the <a href=\"https://codex.wordpress.org/Function_Reference/wp_list_pages\"><code>wp_list_pages</code></a> function accepts. In addition to the <code>wp_list_pages</code> options you can also set <code>class</code>, <code>id</code>, and <code>ordered_list_type</code> options."
+msgstr ""
+
+#. Found in description paragraph.
+msgid "<strong>This plugin is perfect for those who use WordPress as a CMS.</strong>"
+msgstr ""
+
+#. Found in description paragraph.
+msgid "Please see documentation for the <a href=\"https://codex.wordpress.org/Function_Reference/wp_list_pages\"><code>wp_list_pages</code></a> for a complete list of options."
+msgstr ""
+
+#. Found in description paragraph.
+msgid "The following options may be configured in addition to options documented in <a href=\"https://codex.wordpress.org/Function_Reference/wp_list_pages\"><code>wp_list_pages</code></a>:"
+msgstr ""
+
+#. Found in description paragraph.
+msgid "The <code>class</code> and <code>id</code> attributes may specified set class or id values for the initial HTML Page Sitemap <code>&lt;ul&gt;</code> list tag."
+msgstr ""
+
+#. Found in description paragraph.
+msgid "The <code>child_of</code> attribute value can be a numeric page ID (integer), or use the custom value CURRENT or PARENT. The value \"CURRENT\" will use the current page's ID. The value \"PARENT\" will uses the curent page's parent ID."
+msgstr ""
+
+#. Found in description paragraph.
+msgid "The <code>ordered_list_type</code> attribute is an HTML Page Sitemap plugin exclusive option for specfiying an ordered list type. Not setting a ordered_list_type will use an unordered list (default)."
+msgstr ""
+
+#. Found in description paragraph.
+msgid "Note: This plugin only works with Hierarchical Custom Post Types. This plugin will not work if your post type is not heirarchical."
+msgstr ""
+
+#. Found in description paragraph.
+msgid "First example shows how to add a sitemap for the entire site."
+msgstr ""
+
+#. Found in description paragraph.
+msgid "Example shortcode will add a sitemap to a page displaying a depth limit of 3 and exclude page ID 708."
+msgstr ""
+
+#. Found in description paragraph.
+msgid "Example shortcode will add a sitemap to a page displaying only children and grandchildren of the current page."
+msgstr ""
+
+#. Found in description paragraph.
+msgid "Example shortcode will add a sitemap to a page displaying children and grandchildren of the parent page (would include the curent page as well)."
+msgstr ""
+
+#. Found in description paragraph.
+msgid "Example shortcode will add a sitemap displaying the page modified date with the pages sorted by the menu order number."
+msgstr ""
+
+#. Found in description paragraph.
+msgid "Example shortcode excluding multiple pages with ids 708, 1024 and 42."
+msgstr ""
+
+#. Found in description paragraph.
+msgid "Example shortcode will add a class attribute to the <code>&lt;ul&gt;</code> tag."
+msgstr ""
+
+#. Found in description paragraph.
+msgid "Example shortcode will add an id attribute to the <code>&lt;ul&gt;</code> tag."
+msgstr ""
+
+#. Found in description paragraph.
+msgid "Example shortcode will display an ordered list using lowercase letters with a depth of 1."
+msgstr ""
+
+#. Found in description paragraph.
+msgid "For the latest information visit the website."
+msgstr ""
+
+#. Found in description paragraph.
+msgid "<a href=\"http://www.pluginspodcast.com/plugins/html-page-sitemap/\">http://www.pluginspodcast.com/plugins/html-page-sitemap/</a>"
+msgstr ""
+
+#. Found in description paragraph.
+msgid "Though <code>html-sitemap</code> still works, the new HTML Sitemap shortcode is <code>html_sitemap</code>. The dash/hyphen may not get processed correctly if other plugins use the same prefix such as the Syntax Highlighter plugin. <a href=\"http://core.trac.wordpress.org/ticket/11948\">read more</a>, <a href=\"http://core.trac.wordpress.org/ticket/17657\">and more</a>"
+msgstr ""
+
+#. Found in installation header.
+msgid "Automatic Plugin Installation"
+msgstr ""
+
+#. Found in installation header.
+msgid "Manual Plugin Installation"
+msgstr ""
+
+#. Found in installation list item.
+msgid "Go to Plugins &gt; Add New. "
+msgstr ""
+
+#. Found in installation list item.
+msgid "Type in \"HTML Page Sitemap\" in <em>Search</em> Plugins box. "
+msgstr ""
+
+#. Found in installation list item.
+msgid "Find \"HTML Page Sitemap\" in the search results."
+msgstr ""
+
+#. Found in installation list item.
+msgid "Click <em>Install Now</em> to install the WordPress Plugin."
+msgstr ""
+
+#. Found in installation list item.
+msgid "Click Activate to activate it."
+msgstr ""
+
+#. Found in installation list item.
+msgid "Add the shortcode [html_sitemap] to the page(s) of your choice."
+msgstr ""
+
+#. Found in installation list item.
+msgid "Download this plugin to your desktop."
+msgstr ""
+
+#. Found in installation list item.
+msgid "Extract the plugin zip file (or compressed folder) to your desktop."
+msgstr ""
+
+#. Found in installation list item.
+msgid "With your FTP program, upload the plugin folder to the wp-content/plugins folder in your WordPress directory online."
+msgstr ""
+
+#. Found in installation list item.
+msgid "Go to Plugins screen and find \"HTML Page Sitemap\" plugin in the list."
+msgstr ""
+
+#. Found in installation paragraph.
+msgid "Install using the <a href=\"https://codex.wordpress.org/Administration_Screens#Add_New_Plugins\">built-in plugin installer</a>:"
+msgstr ""
+
+#. Found in changelog list item.
+msgid "Released on 11/24/2015"
+msgstr ""
+
+#. Found in changelog list item.
+msgid "Added <code>ordered_list_type</code> option to use an ordered list rather than unordered. (Thanks Allie for the feature suggestion!)"
+msgstr ""
+
+#. Found in changelog list item.
+msgid "Tested with WordPress 4.4 beta 4"
+msgstr ""
+
+#. Found in changelog list item.
+msgid "Released on 9/15/2015"
+msgstr ""
+
+#. Found in changelog list item.
+msgid "Tested with WordPress 4.3."
+msgstr ""
+
+#. Found in changelog list item.
+msgid "Added class and id attribute options for specifying HTML class and/or id attributes in the unordered list <code>&lt;ul&gt;</code>. (Thanks phorbidden for the feature suggestion!)"
+msgstr ""
+
+#. Found in changelog list item.
+msgid "Updated readme, added additional examples for the class and id attribute options."
+msgstr ""
+
+#. Found in changelog list item.
+msgid "Released on 1/11/2015"
+msgstr ""
+
+#. Found in changelog list item.
+msgid "Tested with WordPress 4.1."
+msgstr ""
+
+#. Found in changelog list item.
+msgid "End of source no longer includes closing PHP tag as recommended by WordPress."
+msgstr ""
+
+#. Found in changelog list item.
+msgid "Updated readme, added additional example excluding multipe pages."
+msgstr ""
+
+#. Found in changelog list item.
+msgid "Released 3/11/2013"
+msgstr ""
+
+#. Found in changelog list item.
+msgid "HTML Sitemap compatible with latest versions of WordPress up to 3.5.1"
+msgstr ""
+
+#. Found in changelog list item.
+msgid "Nothing has changed with this plugin other than the readme.txt."
+msgstr ""
+
+#. Found in changelog list item.
+msgid "Released 1/31/2012"
+msgstr ""
+
+#. Found in changelog list item.
+msgid "Hyphen in shortcode changed to underscore. <code>html_sitemap</code> and <code>htmlsitemap</code> shortcodes work.  <a href=\"http://wordpress.org/support/topic/plugins-wont-coexist?replies=5\">read more here</a>"
+msgstr ""
+
+#. Found in changelog list item.
+msgid "HTML Sitemap compatible with latest versions of WordPress up to 3.3.1"
+msgstr ""
+
+#. Found in changelog list item.
+msgid "Released 6/27/2010"
+msgstr ""
+
+#. Found in changelog list item.
+msgid "HTML Sitemap compatible with latest versions of WordPress 2.9 and 3.0."
+msgstr ""
+
+#. Found in changelog list item.
+msgid "Released on 11/24/2009"
+msgstr ""
+
+#. Found in changelog list item.
+msgid "Fixed typos in readme"
+msgstr ""
+
+#. Found in changelog list item.
+msgid "Released on 09/05/2009"
+msgstr ""
+
+#. Found in changelog list item.
+msgid "Initial release of HTML Page Sitemap plugin."
+msgstr ""
+
+#. Found in faq header.
+msgid "Why is there no settings page for the plugin?"
+msgstr ""
+
+#. Found in faq paragraph.
+msgid "I put together this plugin in less than 2 hours, this readme.txt actually took longer to create. This plugin is meant to be simple and easy to use. To keep it simple, it doesn't add settings to your database or clutter to your admin screens."
+msgstr ""
+
+#. Found in remaining content header.
+msgid "Contributors"
+msgstr ""
+
+#. Found in remaining content header.
+msgid "Follow us on Twitter"
+msgstr ""
+
+#. Found in remaining content paragraph.
+msgid "Angelo Mandato, CIO <a href=\"http://www.rawvoice.com\">RawVoice</a> and host of the <a href=\"http://www.pluginspodcast.com\">Plugins Podcast</a> - Plugin author"
+msgstr ""
+
+#. Found in remaining content paragraph.
+msgid "<a href=\"http://twitter.com/pluginspodcast\">http://twitter.com/pluginspodcast</a>"
+msgstr ""
