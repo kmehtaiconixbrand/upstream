@@ -1,0 +1,29 @@
+#wpsl-tabs {
+    margin: 15px 0 25px 0;
+}
+
+#wpsl-csv-fields table {
+    margin-top: 18px;
+    margin-left: -2px;
+}
+
+#wpsl-csv-fields th {
+    text-align: left;
+}
+
+#wpsl-csv-fields td:first-child {
+    width: 150px;
+}
+
+#wpsl-csv-fields select {
+    height: 28px;
+    margin-top: 1px;
+}
+
+.wpsl-geocode-errors {
+    padding-left: 2px;
+}
+
+.wpsl-geocode-errors li {
+    margin-bottom: 15px;
+}

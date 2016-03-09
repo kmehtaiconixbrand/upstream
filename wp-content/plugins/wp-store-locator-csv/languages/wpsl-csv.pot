@@ -1,0 +1,244 @@
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: WP Store Locator - CSV v1.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2016-01-04 12:42+0100\n"
+"PO-Revision-Date: 2015-09-01 13:49+0100\n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"Language: en_US\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=n != 1;\n"
+"X-Generator: Poedit 1.8.4\n"
+"X-Poedit-SourceCharset: UTF-8\n"
+"X-Poedit-KeywordsList: __;_e;__ngettext:1,2;_n:1,2;__ngettext_noop:1,2;"
+"_n_noop:1,2;_c,_nc:4c,1,2;_x:1,2c;_ex:1,2c;_nx:4c,1,2;_nx_noop:4c,1,2\n"
+"X-Poedit-Basepath: ..\n"
+"X-Textdomain-Support: yes\n"
+"X-Poedit-SearchPath-0: .\n"
+
+#: admin/class-admin.php:70 admin/templates/html-csv.php:14
+msgid "CSV Manager"
+msgstr ""
+
+#: admin/class-export.php:104
+msgid "No locations found that match the selected export filters."
+msgstr ""
+
+#: admin/class-export.php:233
+msgid "City"
+msgstr ""
+
+#: admin/class-export.php:234
+msgid "Country"
+msgstr ""
+
+#: admin/class-export.php:251 admin/class-export.php:287
+msgid "Any"
+msgstr ""
+
+#: admin/class-export.php:282
+msgid "Category"
+msgstr ""
+
+#: admin/class-import.php:126
+msgid "CSV Headers"
+msgstr ""
+
+#: admin/class-import.php:127
+msgid "WPSL Fields"
+msgstr ""
+
+#: admin/class-import.php:159
+msgid "Unmapped"
+msgstr ""
+
+#: admin/class-import.php:269
+#, php-format
+msgid ""
+"Update failed! The provided wpsl_id %s doesn't belong to a store location."
+msgstr ""
+
+#: admin/class-import.php:378
+#, php-format
+msgid "Update failed! Make sure %s is a valid wpsl_id"
+msgstr ""
+
+#: admin/class-import.php:487
+#, php-format
+msgid "%s, %s. %sEdit details%s"
+msgstr ""
+
+#: admin/class-import.php:525
+#, php-format
+msgid "Status code \"%s\" for location: %s, %s. %sEdit details%s %s %s"
+msgstr ""
+
+#: admin/class-import.php:706
+#, php-format
+msgid "Imported %d %slocation%s."
+msgid_plural "Imported %d %slocations%s."
+msgstr[0] ""
+msgstr[1] ""
+
+#: admin/class-import.php:715
+msgid "Failed to process the following location."
+msgid_plural "Failed to process the following locations."
+msgstr[0] ""
+msgstr[1] ""
+
+#: admin/class-import.php:718
+msgid "Returned error"
+msgstr ""
+
+#: admin/class-import.php:727
+msgid "The geocoder returned no results for the following addresses:"
+msgstr ""
+
+#: admin/class-import.php:728
+msgid "Geocoding errors"
+msgstr ""
+
+#: admin/class-import.php:743
+#, php-format
+msgid "Read more about the different %sstatus codes%s."
+msgstr ""
+
+#: admin/class-import.php:794
+#, php-format
+msgid ""
+"Could not move the uploaded CSV file to the %s folder. Please make sure the "
+"folder is writable!"
+msgstr ""
+
+#: admin/class-import.php:797
+msgid "The uploaded file exceeds the upload_max_filesize directive in php.ini"
+msgstr ""
+
+#: admin/class-import.php:800
+msgid ""
+"The uploaded file exceeds the MAX_FILE_SIZE directive that was specified in "
+"the HTML form"
+msgstr ""
+
+#: admin/class-import.php:803
+msgid "The uploaded file was only partially uploaded"
+msgstr ""
+
+#: admin/class-import.php:806
+msgid "No file was uploaded"
+msgstr ""
+
+#: admin/class-import.php:809
+msgid "Missing a temporary folder"
+msgstr ""
+
+#: admin/class-import.php:812
+msgid "Failed to write file to disk"
+msgstr ""
+
+#: admin/class-import.php:815
+msgid "File upload stopped by extension"
+msgstr ""
+
+#: admin/class-import.php:819
+msgid "Too many OVER_QUERY_LIMIT errors."
+msgstr ""
+
+#: admin/class-import.php:820
+#, php-format
+msgid ""
+"It looks like you exceeded the Google Maps API %susage limits%s for today. "
+"The usage limits are reset at midnight, Pacific Time."
+msgstr ""
+
+#: admin/class-import.php:821
+#, php-format
+msgid ""
+"If you repeatedly see this error, then you can raise the usage limits by "
+"setting an %sAPI key%s and %senable billing%s."
+msgstr ""
+
+#: admin/class-import.php:822
+#, php-format
+msgid ""
+"You can also try to use a third-party %sservice%s to geocode the addresses "
+"before importing the CSV file."
+msgstr ""
+
+#: admin/class-import.php:824
+msgid ""
+"Failed to process the uploaded CSV file. Are you sure the CSV file isn't "
+"empty?"
+msgstr ""
+
+#: admin/templates/html-csv.php:17
+msgid "Import"
+msgstr ""
+
+#: admin/templates/html-csv.php:18
+msgid "Export"
+msgstr ""
+
+#: admin/templates/html-export.php:16
+msgid "There are currently no locations to export."
+msgstr ""
+
+#: admin/templates/html-export.php:18
+#, php-format
+msgid "You have %d %slocation%s to export."
+msgid_plural "You have %d %slocations%s to export."
+msgstr[0] ""
+msgstr[1] ""
+
+#: admin/templates/html-export.php:19
+msgid "Export Filters"
+msgstr ""
+
+#: admin/templates/html-export.php:26
+msgid "Export Locations"
+msgstr ""
+
+#: admin/templates/html-import.php:16
+#, php-format
+msgid ""
+"%sWarning!%s Before you can upload your CSV file, you need to make sure the "
+"%s directory is writeable."
+msgstr ""
+
+#: admin/templates/html-import.php:21
+#, php-format
+msgid ""
+"Before getting started %sprepare%s your CSV file, and view the %snotes%s."
+msgstr ""
+
+#: admin/templates/html-import.php:23
+msgid "Select CSV file"
+msgstr ""
+
+#: admin/templates/html-import.php:28
+#, php-format
+msgid "Maximum file size: %s."
+msgstr ""
+
+#: admin/templates/html-import.php:29
+msgid "Upload File"
+msgstr ""
+
+#: admin/templates/html-match-fields.php:12
+msgid "Map the CSV headers to the WPSL fields."
+msgstr ""
+
+#: admin/templates/html-match-fields.php:17
+msgid "Import Locations"
+msgstr ""
+
+#: wp-store-locator-csv.php:92
+#, php-format
+msgid ""
+"Please upgrade WP Store Locator to the %slatest version%s before using the "
+"CSV Manager add-on."
+msgstr ""
