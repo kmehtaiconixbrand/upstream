@@ -69,7 +69,7 @@ if ( !class_exists( 'WPSL_Settings' ) ) {
 		public function sanitize_settings() {
 
             global $wpsl_settings, $wpsl_admin;
-            
+
             $ux_absints = array(
                 'height',
                 'infowindow_width',
@@ -95,18 +95,23 @@ if ( !class_exists( 'WPSL_Settings' ) ) {
                 'marker_zoom_to',
                 'mouse_focus',
                 'reset_map',
+                'show_contact_details',
+                'hide_country',
                 'hide_distance'
             );
             
-			$output['api_key']               = sanitize_text_field( $_POST['wpsl_api']['key'] );
+			$output['api_server_key']        = sanitize_text_field( $_POST['wpsl_api']['server_key'] );
+            $output['api_browser_key']       = sanitize_text_field( $_POST['wpsl_api']['browser_key'] );
 			$output['api_language']          = wp_filter_nohtml_kses( $_POST['wpsl_api']['language'] );
 			$output['api_region']            = wp_filter_nohtml_kses( $_POST['wpsl_api']['region'] );
             $output['api_geocode_component'] = isset( $_POST['wpsl_api']['geocode_component'] ) ? 1 : 0;
                         
-            // Do we need to show the dropdown filters?
-            $output['results_dropdown']  = isset( $_POST['wpsl_search']['results_dropdown'] ) ? 1 : 0;
-            $output['radius_dropdown']   = isset( $_POST['wpsl_search']['radius_dropdown'] ) ? 1 : 0;
-            $output['category_dropdown'] = isset( $_POST['wpsl_search']['category_dropdown'] ) ? 1 : 0;
+            // Check the search filter.
+            $output['autocomplete']         = isset( $_POST['wpsl_search']['autocomplete'] ) ? 1 : 0;
+            $output['results_dropdown']     = isset( $_POST['wpsl_search']['results_dropdown'] ) ? 1 : 0;
+            $output['radius_dropdown']      = isset( $_POST['wpsl_search']['radius_dropdown'] ) ? 1 : 0;
+            $output['category_filter']      = isset( $_POST['wpsl_search']['category_filter'] ) ? 1 : 0;
+            $output['category_filter_type'] = ( $_POST['wpsl_search']['category_filter_type'] == 'dropdown' ) ? 'dropdown' : 'checkboxes';
             
             $output['distance_unit'] = ( $_POST['wpsl_search']['distance_unit'] == 'km' ) ? 'km' : 'mi';
 			
@@ -128,7 +133,6 @@ if ( !class_exists( 'WPSL_Settings' ) ) {
 
 			// Check if we have a valid zoom level, it has to be between 1 or 12. If not set it to the default of 3.
 			$output['zoom_level'] = wpsl_valid_zoom_level( $_POST['wpsl_map']['zoom_level'] );	
-			$output['zoom_name']  = sanitize_text_field( $_POST['wpsl_map']['zoom_name'] );
             
             // Check for a valid max auto zoom level.
             $max_zoom_levels = wpsl_get_max_zoom_levels();
@@ -138,27 +142,53 @@ if ( !class_exists( 'WPSL_Settings' ) ) {
             } else {
                 $output['auto_zoom_level'] = wpsl_get_default_setting( 'auto_zoom_level' );
             }
-			
-			// If no location name is set to zoom to we also empty the latlng values from the hidden input field.
-			if ( empty( $output['zoom_name'] ) ) {
+
+            if ( isset( $_POST['wpsl_map']['start_name'] ) ) {
+                $output['start_name'] = sanitize_text_field( $_POST['wpsl_map']['start_name'] );
+            } else {
+                $output['start_name'] = '';
+            }
+
+			// If no location name is then we also empty the latlng values from the hidden input field.
+			if ( empty( $output['start_name'] ) ) {
 				$this->settings_error( 'start_point' );
-                $output['zoom_latlng'] = '';
+                $output['start_latlng'] = '';
 			} else {
-				$output['zoom_latlng'] = sanitize_text_field( $_POST['wpsl_map']['zoom_latlng'] );
+
+                /*
+                 * If the start latlng is empty, but a start location name is provided, 
+                 * then make a request to the Geocode API to get it.
+                 * 
+                 * This can only happen if there is a JS error in the admin area that breaks the
+                 * Google Maps Autocomplete. So this code is only used as fallback to make sure
+                 * the provided start location is always geocoded.
+                 */
+                if ( $wpsl_settings['start_name'] != $_POST['wpsl_map']['start_name']
+                  && $wpsl_settings['start_latlng'] == $_POST['wpsl_map']['start_latlng']
+                  || empty( $_POST['wpsl_map']['start_latlng'] ) ) {
+                    $start_latlng = wpsl_get_address_latlng( $_POST['wpsl_map']['start_name'] );
+                } else {
+                    $start_latlng = sanitize_text_field( $_POST['wpsl_map']['start_latlng'] );
+                }
+                
+				$output['start_latlng'] = $start_latlng;
 			}
+
+			// Do we need to run the fitBounds function make the markers fit in the viewport?
+            $output['run_fitbounds'] = isset( $_POST['wpsl_map']['run_fitbounds'] ) ? 1 : 0;
 
 			// Check if we have a valid map type.
 			$output['map_type']    = wpsl_valid_map_type( $_POST['wpsl_map']['type'] );
             $output['auto_locate'] = isset( $_POST['wpsl_map']['auto_locate'] ) ? 1 : 0; 
             $output['autoload']    = isset( $_POST['wpsl_map']['autoload'] ) ? 1 : 0; 
-            
+
             // Make sure the auto load limit is either empty or an int.
             if ( empty( $_POST['wpsl_map']['autoload_limit'] ) ) {
                 $output['autoload_limit'] = '';
             } else {
                 $output['autoload_limit'] = absint( $_POST['wpsl_map']['autoload_limit'] );
             }
-                        
+     
 			$output['streetview'] 		= isset( $_POST['wpsl_map']['streetview'] ) ? 1 : 0;
             $output['type_control']     = isset( $_POST['wpsl_map']['type_control'] ) ? 1 : 0;
             $output['scrollwheel']      = isset( $_POST['wpsl_map']['scrollwheel'] ) ? 1 : 0;	
@@ -265,10 +295,11 @@ if ( !class_exists( 'WPSL_Settings' ) ) {
 			foreach ( $required_labels as $label ) {
                 $output[$label.'_label'] = sanitize_text_field( $_POST['wpsl_label'][$label] );
 			}
+
+            $output['show_credits']     = isset( $_POST['wpsl_credits'] ) ? 1 : 0;
+            $output['debug']            = isset( $_POST['wpsl_tools']['debug'] ) ? 1 : 0;
+            $output['deregister_gmaps'] = isset( $_POST['wpsl_tools']['deregister_gmaps'] ) ? 1 : 0;
             
-            $output['show_credits'] = isset( $_POST['wpsl_credits'] ) ? 1 : 0;
-            $output['debug']        = isset( $_POST['wpsl_tools']['debug'] ) ? 1 : 0;
-             
             // Check if we need to flush the permalinks.
             $this->set_flush_rewrite_option( $output );           
   
@@ -276,7 +307,7 @@ if ( !class_exists( 'WPSL_Settings' ) ) {
             if ( $wpsl_settings['autoload'] ) {
                 $this->set_delete_transient_option( $output );
             }
-
+            
 			return $output;
 		} 
 
@@ -311,14 +342,16 @@ if ( !class_exists( 'WPSL_Settings' ) ) {
 
             // The options we need to check for changes.
             $options = array(
-                'zoom_name',
+                'start_name',
                 'debug',
                 'autoload', 
                 'autoload_limit', 
                 'more_info', 
                 'more_info_location', 
                 'hide_hours',
-                'hide_distance'
+                'hide_distance',
+                'hide_country',
+                'show_contact_details'
             );
 
             foreach ( $options as $option_name ) {
@@ -454,215 +487,262 @@ if ( !class_exists( 'WPSL_Settings' ) ) {
 				);	
 					break;			
 				case 'region':
-					$api_option_list = array (   
-						__('Select your region', 'wpsl')               => '',
-						__('Afghanistan', 'wpsl')                      => 'af',
-						__('Albania', 'wpsl')                          => 'al',
-						__('Algeria', 'wpsl')                          => 'dz',
-						__('American Samoa', 'wpsl')                   => 'as',
-						__('Andorra', 'wpsl')                          => 'ad',
-						__('Anguilla', 'wpsl')                         => 'ai',
-						__('Angola', 'wpsl')                           => 'ao',
-						__('Antigua and Barbuda', 'wpsl')              => 'ag',
-						__('Argentina', 'wpsl')                        => 'ar',
-						__('Armenia', 'wpsl')                          => 'am',
-						__('Aruba', 'wpsl')                            => 'aw',
-						__('Australia', 'wpsl')                        => 'au',
-						__('Austria', 'wpsl')                          => 'at',
-						__('Azerbaijan', 'wpsl')                       => 'az',
-						__('Bahamas', 'wpsl')                          => 'bs',
-						__('Bahrain', 'wpsl')                          => 'bh',
-						__('Bangladesh', 'wpsl')                       => 'bd',
-						__('Barbados', 'wpsl')                         => 'bb',
-						__('Belarus', 'wpsl')                          => 'by',
-						__('Belgium', 'wpsl')                          => 'be',
-						__('Belize', 'wpsl')                           => 'bz',
-						__('Benin', 'wpsl')                            => 'bj',
-						__('Bermuda', 'wpsl')                          => 'bm',
-						__('Bhutan', 'wpsl')                           => 'bt',
-						__('Bolivia', 'wpsl')                          => 'bo',
-						__('Bosnia and Herzegovina', 'wpsl')           => 'ba',
-						__('Botswana', 'wpsl')                         => 'bw',
-						__('Brazil', 'wpsl')                           => 'br',
-						__('British Indian Ocean Territory', 'wpsl')   => 'io',
-						__('Brunei', 'wpsl')                           => 'bn',
-						__('Bulgaria', 'wpsl')                         => 'bg',
-						__('Burkina Faso', 'wpsl')                     => 'bf',
-						__('Burundi', 'wpsl')                          => 'bi',
-						__('Cambodia', 'wpsl')                         => 'kh',
-						__('Cameroon', 'wpsl')                         => 'cm',
-						__('Canada', 'wpsl')                           => 'ca',
-						__('Cape Verde', 'wpsl')                       => 'cv',
-						__('Cayman Islands', 'wpsl')                   => 'ky',
-						__('Central African Republic', 'wpsl')         => 'cf',
-						__('Chad', 'wpsl')                             => 'td',
-						__('Chile', 'wpsl')                            => 'cl',
-						__('China', 'wpsl')                            => 'cn',
-						__('Christmas Island', 'wpsl')                 => 'cx',
-						__('Cocos Islands', 'wpsl')                    => 'cc',
-						__('Colombia', 'wpsl')                         => 'co',
-						__('Comoros', 'wpsl')                          => 'km',
-						__('Congo', 'wpsl')                            => 'cg',
-						__('Costa Rica', 'wpsl')                       => 'cr',
-						__('Côte d\'Ivoire', 'wpsl')                   => 'ci',
-						__('Croatia', 'wpsl')                          => 'hr',
-						__('Cuba', 'wpsl')                             => 'cu',
-						__('Czech Republic', 'wpsl')                   => 'cz',
-						__('Denmark', 'wpsl')                          => 'dk',
-						__('Djibouti', 'wpsl')                         => 'dj',
-						__('Democratic Republic of the Congo', 'wpsl') => 'cd',
-						__('Dominica', 'wpsl')                         => 'dm',
-						__('Dominican Republic', 'wpsl')               => 'do',
-						__('Ecuador', 'wpsl')                          => 'ec',
-						__('Egypt', 'wpsl')                            => 'eg',
-						__('El Salvador', 'wpsl')                      => 'sv',
-						__('Equatorial Guinea', 'wpsl')                => 'gq',
-						__('Eritrea', 'wpsl')                          => 'er',
-						__('Estonia', 'wpsl')                          => 'ee',
-						__('Ethiopia', 'wpsl')                         => 'et',
-						__('Fiji', 'wpsl')                             => 'fj',
-						__('Finland', 'wpsl')                          => 'fi',
-						__('France', 'wpsl')                           => 'fr',
-						__('French Guiana', 'wpsl')                    => 'gf',
-						__('Gabon', 'wpsl')                            => 'ga',
-						__('Gambia', 'wpsl')                           => 'gm',
-						__('Germany', 'wpsl')                          => 'de',
-						__('Ghana', 'wpsl')                            => 'gh',
-						__('Greenland', 'wpsl')                        => 'gl',
-						__('Greece', 'wpsl')                           => 'gr',
-						__('Grenada', 'wpsl')                          => 'gd',
-						__('Guam', 'wpsl')                             => 'gu',
-						__('Guadeloupe', 'wpsl')                       => 'gp',
-						__('Guatemala', 'wpsl')                        => 'gt',
-						__('Guinea', 'wpsl')                           => 'gn',
-						__('Guinea-Bissau', 'wpsl')                    => 'gw',
-						__('Haiti', 'wpsl')                            => 'ht',
-						__('Honduras', 'wpsl')                         => 'hn',
-						__('Hong Kong', 'wpsl')                        => 'hk',
-						__('Hungary', 'wpsl')                          => 'hu',
-						__('Iceland', 'wpsl')                          => 'is',
-						__('India', 'wpsl')                            => 'in',
-						__('Indonesia', 'wpsl')                        => 'id',
-						__('Iran', 'wpsl')                             => 'ir',
-						__('Iraq', 'wpsl')                             => 'iq',
-						__('Ireland', 'wpsl')                          => 'ie',
-						__('Israel', 'wpsl')                           => 'il',
-						__('Italy', 'wpsl')                            => 'it',
-						__('Jamaica', 'wpsl')                          => 'jm',
-						__('Japan', 'wpsl')                            => 'jp',
-						__('Jordan', 'wpsl')                           => 'jo',
-						__('Kazakhstan', 'wpsl')                       => 'kz',
-						__('Kenya', 'wpsl')                            => 'ke',
-						__('Kuwait', 'wpsl')                           => 'kw',
-						__('Kyrgyzstan', 'wpsl')                       => 'kg',
-						__('Laos', 'wpsl')                             => 'la',
-						__('Latvia', 'wpsl')                           => 'lv',
-						__('Lebanon', 'wpsl')                          => 'lb',
-						__('Lesotho', 'wpsl')                          => 'ls',
-						__('Liberia', 'wpsl')                          => 'lr',
-						__('Libya', 'wpsl')                            => 'ly',
-						__('Liechtenstein', 'wpsl')                    => 'li',
-						__('Lithuania', 'wpsl')                        => 'lt',
-						__('Luxembourg', 'wpsl')                       => 'lu',
-						__('Macau', 'wpsl')                            => 'mo',
-						__('Macedonia', 'wpsl')                        => 'mk',
-						__('Madagascar', 'wpsl')                       => 'mg',
-						__('Malawi', 'wpsl')                           => 'mw',
-						__('Malaysia ', 'wpsl')                        => 'my',
-						__('Mali', 'wpsl')                             => 'ml',
-						__('Marshall Islands', 'wpsl')                 => 'mh',
-						__('Martinique', 'wpsl')                       => 'il',
-						__('Mauritania', 'wpsl')                       => 'mr',
-						__('Mauritius', 'wpsl')                        => 'mu',
-						__('Mexico', 'wpsl')                           => 'mx',
-						__('Micronesia', 'wpsl')                       => 'fm',
-						__('Moldova', 'wpsl')                          => 'md',
-						__('Monaco' ,'wpsl')                           => 'mc',
-						__('Mongolia', 'wpsl')                         => 'mn',
-						__('Montenegro', 'wpsl')                       => 'me',
-						__('Montserrat', 'wpsl')                       => 'ms',
-						__('Morocco', 'wpsl')                          => 'ma',
-						__('Mozambique', 'wpsl')                       => 'mz',
-						__('Myanmar', 'wpsl')                          => 'mm',
-						__('Namibia', 'wpsl')                          => 'na',
-						__('Nauru', 'wpsl')                            => 'nr',
-						__('Nepal', 'wpsl')                            => 'np',
-						__('Netherlands', 'wpsl')                      => 'nl',
-						__('Netherlands Antilles', 'wpsl')             => 'an',
-						__('New Zealand', 'wpsl')                      => 'nz',
-						__('Nicaragua', 'wpsl')                        => 'ni',
-						__('Niger', 'wpsl')                            => 'ne',
-						__('Nigeria', 'wpsl')                          => 'ng',
-						__('Niue', 'wpsl')                             => 'nu',
-						__('Northern Mariana Islands', 'wpsl')         => 'mp',
-						__('Norway', 'wpsl')                           => 'no',
-						__('Oman', 'wpsl')                             => 'om',
-						__('Pakistan', 'wpsl')                         => 'pk',
-						__('Panama' ,'wpsl')                           => 'pa',
-						__('Papua New Guinea', 'wpsl')                 => 'pg',
-						__('Paraguay' ,'wpsl')                         => 'py',
-						__('Peru', 'wpsl')                             => 'pe',
-						__('Philippines', 'wpsl')                      => 'ph',
-						__('Pitcairn Islands', 'wpsl')                 => 'pn',
-						__('Poland', 'wpsl')                           => 'pl',
-						__('Portugal', 'wpsl')                         => 'pt',
-						__('Qatar', 'wpsl')                            => 'qa',
-						__('Reunion', 'wpsl')                          => 're',
-						__('Romania', 'wpsl')                          => 'ro',
-						__('Russia', 'wpsl')                           => 'ru',
-						__('Rwanda', 'wpsl')                           => 'rw',
-						__('Saint Helena', 'wpsl')                     => 'sh',
-						__('Saint Kitts and Nevis', 'wpsl')            => 'kn',
-						__('Saint Vincent and the Grenadines', 'wpsl') => 'vc',
-						__('Saint Lucia', 'wpsl')                      => 'lc',
-						__('Samoa', 'wpsl')                            => 'ws',
-						__('San Marino', 'wpsl')                       => 'sm',
-						__('São Tomé and Príncipe', 'wpsl')            => 'st',
-						__('Saudi Arabia', 'wpsl')                     => 'sa',
-						__('Senegal', 'wpsl')                          => 'sn',
-						__('Serbia', 'wpsl')                           => 'rs',
-						__('Seychelles', 'wpsl')                       => 'sc',
-						__('Sierra Leone', 'wpsl')                     => 'sl',
-						__('Singapore', 'wpsl')                        => 'sg',
-						__('Slovakia', 'wpsl')                         => 'si',
-						__('Solomon Islands', 'wpsl')                  => 'sb',
-						__('Somalia', 'wpsl')                          => 'so',
-						__('South Africa', 'wpsl')                     => 'za',
-						__('South Korea', 'wpsl')                      => 'kr',
-						__('Spain', 'wpsl')                            => 'es',
-						__('Sri Lanka', 'wpsl')                        => 'lk',
-						__('Sudan', 'wpsl')                            => 'sd',
-						__('Swaziland', 'wpsl')                        => 'sz',
-						__('Sweden', 'wpsl')                           => 'se',
-						__('Switzerland', 'wpsl')                      => 'ch',	
-						__('Syria', 'wpsl')                            => 'sy',
-						__('Taiwan', 'wpsl')                           => 'tw',
-						__('Tajikistan', 'wpsl')                       => 'tj',
-						__('Tanzania', 'wpsl')                         => 'tz',
-						__('Thailand', 'wpsl')                         => 'th',
-						__('Timor-Leste', 'wpsl')                      => 'tl',
-						__('Tokelau' ,'wpsl')                          => 'tk',
-						__('Togo', 'wpsl')                             => 'tg',
-						__('Tonga', 'wpsl')                            => 'to',
-						__('Trinidad and Tobago', 'wpsl')              => 'tt',
-						__('Tunisia', 'wpsl')                          => 'tn',
-						__('Turkey', 'wpsl')                           => 'tr',
-						__('Turkmenistan', 'wpsl')                     => 'tm',
-						__('Tuvalu', 'wpsl')                           => 'tv',
-						__('Uganda', 'wpsl')                           => 'ug',
-						__('Ukraine', 'wpsl')                          => 'ua',
-						__('United Arab Emirates', 'wpsl')             => 'ae',
-						__('United Kingdom', 'wpsl')                   => 'gb',
-						__('United States', 'wpsl')                    => 'us',
-						__('Uruguay', 'wpsl')                          => 'uy',
-						__('Uzbekistan', 'wpsl')                       => 'uz',
-						__('Wallis Futuna', 'wpsl')                    => 'wf',
-						__('Venezuela', 'wpsl')                        => 've',
-						__('Vietnam', 'wpsl')                          => 'vn',
-						__('Yemen', 'wpsl')                            => 'ye',
-						__('Zambia' ,'wpsl')                           => 'zm',
-						__('Zimbabwe', 'wpsl')                         => 'zw'	
-				);				
+                    $api_option_list = array (
+                        __('Select your region', 'wpsl')               => '',
+                        __('Afghanistan', 'wpsl')                      => 'af',
+                        __('Albania', 'wpsl')                          => 'al',
+                        __('Algeria', 'wpsl')                          => 'dz',
+                        __('American Samoa', 'wpsl')                   => 'as',
+                        __('Andorra', 'wpsl')                          => 'ad',
+                        __('Angola', 'wpsl')                           => 'ao',
+                        __('Anguilla', 'wpsl')                         => 'ai',
+                        __('Antarctica', 'wpsl')                       => 'aq',
+                        __('Antigua and Barbuda', 'wpsl')              => 'ag',
+                        __('Argentina', 'wpsl')                        => 'ar',
+                        __('Armenia', 'wpsl')                          => 'am',
+                        __('Aruba', 'wpsl')                            => 'aw',
+                        __('Ascension Island', 'wpsl')                 => 'ac',
+                        __('Australia', 'wpsl')                        => 'au',
+                        __('Austria', 'wpsl')                          => 'at',
+                        __('Azerbaijan', 'wpsl')                       => 'az',
+                        __('Bahamas', 'wpsl')                          => 'bs',
+                        __('Bahrain', 'wpsl')                          => 'bh',
+                        __('Bangladesh', 'wpsl')                       => 'bd',
+                        __('Barbados', 'wpsl')                         => 'bb',
+                        __('Belarus', 'wpsl')                          => 'by',
+                        __('Belgium', 'wpsl')                          => 'be',
+                        __('Belize', 'wpsl')                           => 'bz',
+                        __('Benin', 'wpsl')                            => 'bj',
+                        __('Bermuda', 'wpsl')                          => 'bm',
+                        __('Bhutan', 'wpsl')                           => 'bt',
+                        __('Bolivia', 'wpsl')                          => 'bo',
+                        __('Bosnia and Herzegovina', 'wpsl')           => 'ba',
+                        __('Botswana', 'wpsl')                         => 'bw',
+                        __('Bouvet Island', 'wpsl')                    => 'bv',
+                        __('Brazil', 'wpsl')                           => 'br',
+                        __('British Indian Ocean Territory', 'wpsl')   => 'io',
+                        __('British Virgin Islands', 'wpsl')           => 'vg',
+                        __('Brunei', 'wpsl')                           => 'bn',
+                        __('Bulgaria', 'wpsl')                         => 'bg',
+                        __('Burkina Faso', 'wpsl')                     => 'bf',
+                        __('Burundi', 'wpsl')                          => 'bi',
+                        __('Cambodia', 'wpsl')                         => 'kh',
+                        __('Cameroon', 'wpsl')                         => 'cm',
+                        __('Canada', 'wpsl')                           => 'ca',
+                        __('Canary Islands', 'wpsl')                   => 'ic',
+                        __('Cape Verde', 'wpsl')                       => 'cv',
+                        __('Caribbean Netherlands', 'wpsl')            => 'bq',
+                        __('Cayman Islands', 'wpsl')                   => 'ky',
+                        __('Central African Republic', 'wpsl')         => 'cf',
+                        __('Ceuta and Melilla', 'wpsl')                => 'ea',
+                        __('Chad', 'wpsl')                             => 'td',
+                        __('Chile', 'wpsl')                            => 'cl',
+                        __('China', 'wpsl')                            => 'cn',
+                        __('Christmas Island', 'wpsl')                 => 'cx',
+                        __('Clipperton Island', 'wpsl')                => 'cp',
+                        __('Cocos (Keeling) Islands', 'wpsl')          => 'cc',
+                        __('Colombia', 'wpsl')                         => 'co',
+                        __('Comoros', 'wpsl')                          => 'km',
+                        __('Congo (DRC', 'wpsl')                       => 'cd',
+                        __('Congo (Republic)', 'wpsl')                 => 'cg',
+                        __('Cook Islands', 'wpsl')                     => 'ck',
+                        __('Costa Rica', 'wpsl')                       => 'cr',
+                        __('Croatia', 'wpsl')                          => 'hr',
+                        __('Cuba', 'wpsl')                             => 'cu',
+                        __('Curaçao', 'wpsl')                          => 'cw',
+                        __('Cyprus', 'wpsl')                           => 'cy',
+                        __('Czech Republic', 'wpsl')                   => 'cz',
+                        __('Côte d\'Ivoire', 'wpsl')                   => 'ci',
+                        __('Denmark', 'wpsl')                          => 'dk',
+                        __('Djibouti', 'wpsl')                         => 'dj',
+                        __('Democratic Republic of the Congo', 'wpsl') => 'cd',
+                        __('Dominica', 'wpsl')                         => 'dm',
+                        __('Dominican Republic', 'wpsl')               => 'do',
+                        __('Ecuador', 'wpsl')                          => 'ec',
+                        __('Egypt', 'wpsl')                            => 'eg',
+                        __('El Salvador', 'wpsl')                      => 'sv',
+                        __('Equatorial Guinea', 'wpsl')                => 'gq',
+                        __('Eritrea', 'wpsl')                          => 'er',
+                        __('Estonia', 'wpsl')                          => 'ee',
+                        __('Ethiopia', 'wpsl')                         => 'et',
+                        __('Falkland Islands(Islas Malvinas)', 'wpsl') => 'fk',
+                        __('Faroe Islands', 'wpsl')                    => 'fo',
+                        __('Fiji', 'wpsl')                             => 'fj',
+                        __('Finland', 'wpsl')                          => 'fi',
+                        __('France', 'wpsl')                           => 'fr',
+                        __('French Guiana', 'wpsl')                    => 'gf',
+                        __('French Polynesia', 'wpsl')                 => 'pf',
+                        __('French Southern Territories', 'wpsl')      => 'tf',
+                        __('Gabon', 'wpsl')                            => 'ga',
+                        __('Gambia', 'wpsl')                           => 'gm',
+                        __('Georgia', 'wpsl')                          => 'ge',
+                        __('Germany', 'wpsl')                          => 'de',
+                        __('Ghana', 'wpsl')                            => 'gh',
+                        __('Gibraltar', 'wpsl')                        => 'gi',
+                        __('Greece', 'wpsl')                           => 'gr',
+                        __('Greenland', 'wpsl')                        => 'gl',
+                        __('Grenada', 'wpsl')                          => 'gd',
+                        __('Guam', 'wpsl')                             => 'gu',
+                        __('Guadeloupe', 'wpsl')                       => 'gp',
+                        __('Guam', 'wpsl')                             => 'gu',
+                        __('Guatemala', 'wpsl')                        => 'gt',
+                        __('Guernsey', 'wpsl')                         => 'gg',
+                        __('Guinea', 'wpsl')                           => 'gn',
+                        __('Guinea-Bissau', 'wpsl')                    => 'gw',
+                        __('Guyana', 'wpsl')                           => 'gy',
+                        __('Haiti', 'wpsl')                            => 'ht',
+                        __('Heard and McDonald Islands', 'wpsl')       => 'hm',
+                        __('Honduras', 'wpsl')                         => 'hn',
+                        __('Hong Kong', 'wpsl')                        => 'hk',
+                        __('Hungary', 'wpsl')                          => 'hu',
+                        __('Iceland', 'wpsl')                          => 'is',
+                        __('India', 'wpsl')                            => 'in',
+                        __('Indonesia', 'wpsl')                        => 'id',
+                        __('Iran', 'wpsl')                             => 'ir',
+                        __('Iraq', 'wpsl')                             => 'iq',
+                        __('Ireland', 'wpsl')                          => 'ie',
+                        __('Isle of Man', 'wpsl')                      => 'im',
+                        __('Israel', 'wpsl')                           => 'il',
+                        __('Italy', 'wpsl')                            => 'it',
+                        __('Jamaica', 'wpsl')                          => 'jm',
+                        __('Japan', 'wpsl')                            => 'jp',
+                        __('Jersey', 'wpsl')                           => 'je',
+                        __('Jordan', 'wpsl')                           => 'jo',
+                        __('Kazakhstan', 'wpsl')                       => 'kz',
+                        __('Kenya', 'wpsl')                            => 'ke',
+                        __('Kiribati', 'wpsl')                         => 'ki',
+                        __('Kosovo', 'wpsl')                           => 'xk',
+                        __('Kuwait', 'wpsl')                           => 'kw',
+                        __('Kyrgyzstan', 'wpsl')                       => 'kg',
+                        __('Laos', 'wpsl')                             => 'la',
+                        __('Latvia', 'wpsl')                           => 'lv',
+                        __('Lebanon', 'wpsl')                          => 'lb',
+                        __('Lesotho', 'wpsl')                          => 'ls',
+                        __('Liberia', 'wpsl')                          => 'lr',
+                        __('Libya', 'wpsl')                            => 'ly',
+                        __('Liechtenstein', 'wpsl')                    => 'li',
+                        __('Lithuania', 'wpsl')                        => 'lt',
+                        __('Luxembourg', 'wpsl')                       => 'lu',
+                        __('Macau', 'wpsl')                            => 'mo',
+                        __('Macedonia (FYROM)', 'wpsl')                => 'mk',
+                        __('Madagascar', 'wpsl')                       => 'mg',
+                        __('Malawi', 'wpsl')                           => 'mw',
+                        __('Malaysia ', 'wpsl')                        => 'my',
+                        __('Maldives ', 'wpsl')                        => 'mv',
+                        __('Mali', 'wpsl')                             => 'ml',
+                        __('Malta', 'wpsl')                            => 'mt',
+                        __('Marshall Islands', 'wpsl')                 => 'mh',
+                        __('Martinique', 'wpsl')                       => 'mq',
+                        __('Mauritania', 'wpsl')                       => 'mr',
+                        __('Mauritius', 'wpsl')                        => 'mu',
+                        __('Mayotte', 'wpsl')                          => 'yt',
+                        __('Mexico', 'wpsl')                           => 'mx',
+                        __('Micronesia', 'wpsl')                       => 'fm',
+                        __('Moldova', 'wpsl')                          => 'md',
+                        __('Monaco' ,'wpsl')                           => 'mc',
+                        __('Mongolia', 'wpsl')                         => 'mn',
+                        __('Montenegro', 'wpsl')                       => 'me',
+                        __('Montserrat', 'wpsl')                       => 'ms',
+                        __('Morocco', 'wpsl')                          => 'ma',
+                        __('Mozambique', 'wpsl')                       => 'mz',
+                        __('Myanmar (Burma)', 'wpsl')                  => 'mm',
+                        __('Namibia', 'wpsl')                          => 'na',
+                        __('Nauru', 'wpsl')                            => 'nr',
+                        __('Nepal', 'wpsl')                            => 'np',
+                        __('Netherlands', 'wpsl')                      => 'nl',
+                        __('Netherlands Antilles', 'wpsl')             => 'an',
+                        __('New Caledonia', 'wpsl')                    => 'nc',
+                        __('New Zealand', 'wpsl')                      => 'nz',
+                        __('Nicaragua', 'wpsl')                        => 'ni',
+                        __('Niger', 'wpsl')                            => 'ne',
+                        __('Nigeria', 'wpsl')                          => 'ng',
+                        __('Niue', 'wpsl')                             => 'nu',
+                        __('Norfolk Island', 'wpsl')                   => 'nf',
+                        __('North Korea', 'wpsl')                      => 'kp',
+                        __('Northern Mariana Islands', 'wpsl')         => 'mp',
+                        __('Norway', 'wpsl')                           => 'no',
+                        __('Oman', 'wpsl')                             => 'om',
+                        __('Pakistan', 'wpsl')                         => 'pk',
+                        __('Palau', 'wpsl')                            => 'pw',
+                        __('Palestine', 'wpsl')                        => 'ps',
+                        __('Panama' ,'wpsl')                           => 'pa',
+                        __('Papua New Guinea', 'wpsl')                 => 'pg',
+                        __('Paraguay' ,'wpsl')                         => 'py',
+                        __('Peru', 'wpsl')                             => 'pe',
+                        __('Philippines', 'wpsl')                      => 'ph',
+                        __('Pitcairn Islands', 'wpsl')                 => 'pn',
+                        __('Poland', 'wpsl')                           => 'pl',
+                        __('Portugal', 'wpsl')                         => 'pt',
+                        __('Puerto Rico', 'wpsl')                      => 'pr',
+                        __('Qatar', 'wpsl')                            => 'qa',
+                        __('Reunion', 'wpsl')                          => 're',
+                        __('Romania', 'wpsl')                          => 'ro',
+                        __('Russia', 'wpsl')                           => 'ru',
+                        __('Rwanda', 'wpsl')                           => 'rw',
+                        __('Saint Helena', 'wpsl')                     => 'sh',
+                        __('Saint Kitts and Nevis', 'wpsl')            => 'kn',
+                        __('Saint Vincent and the Grenadines', 'wpsl') => 'vc',
+                        __('Saint Lucia', 'wpsl')                      => 'lc',
+                        __('Samoa', 'wpsl')                            => 'ws',
+                        __('San Marino', 'wpsl')                       => 'sm',
+                        __('São Tomé and Príncipe', 'wpsl')            => 'st',
+                        __('Saudi Arabia', 'wpsl')                     => 'sa',
+                        __('Senegal', 'wpsl')                          => 'sn',
+                        __('Serbia', 'wpsl')                           => 'rs',
+                        __('Seychelles', 'wpsl')                       => 'sc',
+                        __('Sierra Leone', 'wpsl')                     => 'sl',
+                        __('Singapore', 'wpsl')                        => 'sg',
+                        __('Sint Maarten', 'wpsl')                     => 'sx',
+                        __('Slovakia', 'wpsl')                         => 'sk',
+                        __('Slovenia', 'wpsl')                         => 'si',
+                        __('Solomon Islands', 'wpsl')                  => 'sb',
+                        __('Somalia', 'wpsl')                          => 'so',
+                        __('South Africa', 'wpsl')                     => 'za',
+                        __('South Georgia and South Sandwich Islands', 'wpsl') => 'gs',
+                        __('South Korea', 'wpsl')                      => 'kr',
+                        __('South Sudan', 'wpsl')                      => 'ss',
+                        __('Spain', 'wpsl')                            => 'es',
+                        __('Sri Lanka', 'wpsl')                        => 'lk',
+                        __('Sudan', 'wpsl')                            => 'sd',
+                        __('Swaziland', 'wpsl')                        => 'sz',
+                        __('Sweden', 'wpsl')                           => 'se',
+                        __('Switzerland', 'wpsl')                      => 'ch',
+                        __('Syria', 'wpsl')                            => 'sy',
+                        __('São Tomé & Príncipe', 'wpsl')              => 'st',
+                        __('Taiwan', 'wpsl')                           => 'tw',
+                        __('Tajikistan', 'wpsl')                       => 'tj',
+                        __('Tanzania', 'wpsl')                         => 'tz',
+                        __('Thailand', 'wpsl')                         => 'th',
+                        __('Timor-Leste', 'wpsl')                      => 'tl',
+                        __('Tokelau' ,'wpsl')                          => 'tk',
+                        __('Togo', 'wpsl')                             => 'tg',
+                        __('Tokelau' ,'wpsl')                          => 'tk',
+                        __('Tonga', 'wpsl')                            => 'to',
+                        __('Trinidad and Tobago', 'wpsl')              => 'tt',
+                        __('Tristan da Cunha', 'wpsl')                 => 'ta',
+                        __('Tunisia', 'wpsl')                          => 'tn',
+                        __('Turkey', 'wpsl')                           => 'tr',
+                        __('Turkmenistan', 'wpsl')                     => 'tm',
+                        __('Turks and Caicos Islands', 'wpsl')         => 'tc',
+                        __('Tuvalu', 'wpsl')                           => 'tv',
+                        __('Uganda', 'wpsl')                           => 'ug',
+                        __('Ukraine', 'wpsl')                          => 'ua',
+                        __('United Arab Emirates', 'wpsl')             => 'ae',
+                        __('United Kingdom', 'wpsl')                   => 'gb',
+                        __('United States', 'wpsl')                    => 'us',
+                        __('Uruguay', 'wpsl')                          => 'uy',
+                        __('Uzbekistan', 'wpsl')                       => 'uz',
+                        __('Vanuatu', 'wpsl')                          => 'vu',
+                        __('Vatican City', 'wpsl')                     => 'va',
+                        __('Venezuela', 'wpsl')                        => 've',
+                        __('Vietnam', 'wpsl')                          => 'vn',
+                        __('Wallis Futuna', 'wpsl')                    => 'wf',
+                        __('Western Sahara', 'wpsl')                   => 'eh',
+                        __('Yemen', 'wpsl')                            => 'ye',
+                        __('Zambia' ,'wpsl')                           => 'zm',
+                        __('Zimbabwe', 'wpsl')                         => 'zw',
+                        __('Åland Islands', 'wpsl')                    => 'ax'
+                    );
 			}
 			
 			// Make sure we have an array with a value.
@@ -984,6 +1064,15 @@ if ( !class_exists( 'WPSL_Settings' ) ) {
                     'id'       => 'wpsl-address-format',
                     'name'     => 'wpsl_ux[address_format]',
                     'selected' => $wpsl_settings['address_format']
+                ),
+                'filter_types' => array(
+                    'values' => array(
+                        'dropdown'   => __( 'Dropdown', 'wpsl' ), 
+                        'checkboxes' => __( 'Checkboxes', 'wpsl' )
+                     ),
+                    'id'       => 'wpsl-cat-filter-types',
+                    'name'     => 'wpsl_search[category_filter_type]',
+                    'selected' => $wpsl_settings['category_filter_type']
                 )
             );
                         

@@ -1,68 +1,73 @@
 === Master Slider - Responsive Touch Slider ===
-Contributors: averta
+Contributors: averta, averta_support
 Donate link: http://averta.net/
 License: GPLv3
 License URI: http://www.gnu.org/licenses/gpl.html
-Tags: banner rotator, carousel, content slider, gallery, image slider, responsive slider, showcase, slideshow, swipe, touch slider, video gallery, SEO, vertical slide, HTML5 slider, hardware accelerate, best slider, animation, mobile slider, iOS, android, video slider, youtube slider, horizontal slider, vertical slider, fullwidth slider, fullscreen slider, post slider, photo slider, online album, mobile slider, WordPress slider,wpml, ,ultisite, wistia, woocommerce, product slider, woocommerce slider, portfolio, gallery
-Requires at least: 4.0
-Tested up to: 4.3.1
-Stable tag: 2.7.2
+Tags: slider, image slider, wordpress slider, video slider, best slider plugin, slideshow, swipe, touch slider, content slider, SEO, vertical slider, HTML5 slider, hardware accelerate, animation, mobile slider, iOS, android, youtube slider, horizontal slider, responsive slider, fullscreen slider, post slider, photo slider, online album, mobile slider, WordPress slider,wpml, ,ultisite, wistia, woocommerce, product slider, woocommerce slider, portfolio, gallery, lightweight slider
+Requires at least: 4.6
+Tested up to: 4.8.2
+Stable tag: 3.1.6
 
-The most advanced responsive and HTML5 WordPress slider plugin with touch swipe navigation that works smoothly on desktop and devices.
+Build SEO friendly sliders fast and easy with Master Slider. The most advanced responsive HTML5 WordPress slider plugin, with touch swipe navigation that works smoothly on desktop and devices.
 
 == Description ==
 
->[Demo sliders](http://avt.li/mswftem "Live demos of Master Slider free version") | [Features](http://avt.li/mswfea "All features") | [Documentation](http://avt.li/mswfdoc "Master Slider documentation") | [Video tutorials](http://avt.li/msfvids "Watch all video tutorials") | [Support forum](http://wordpress.org/support/plugin/master-slider "Free support")
+>[Demos](http://avt.li/mswftem "Live demos of Master Slider free version") | [Features](http://avt.li/mswfea "All features") | [Documentation](http://avt.li/mswfdoc "Master Slider documentation") | [All Video tutorials](http://avt.li/msfvids "Watch all video tutorials") | [Support](http://wordpress.org/support/plugin/master-slider "Free support")
+
+[youtube https://www.youtube.com/watch?v=nyjpGEHwOn8]
 
 
 = Overview =
 
-Master Slider is a free responsive image and content slider with super smooth hardware accelerated transitions. It supports touch navigation with pure swipe gesture that you have never experienced before. It's a truly responsive and device friendly slider which works perfectly in all major devices.
+Master Slider is a free SEO friendly, responsive image and video slider that truly works on all major devices, and it has super smooth hardware accelerated transitions. It supports touch navigation with pure swipe gesture that you have never experienced before.
+With our 8 Starter Samples, creating slideshows has never been so fast and enjoyable!
 
-[youtube https://www.youtube.com/watch?v=nyjpGEHwOn8]
+>Looking for a perfect Free WP theme for Master Slider? [Get Phlox theme](http://avt.li/msphpp "Phlox theme - Free Minimal and Responsive WordPress Theme")
 
-[Watch all video tutorials](http://avt.li/msfvids)
 
-Master Slider is built using WordPress best practices both on the front and the back end. This results in an efficient, robust and intuitive plugin. It's works with any theme, including the default WordPress themes.
+Master Slider is built using WordPress best practices both on the front and the back end. This results in an efficient, robust and intuitive plugin. It works with any theme, including WordPress Default Themes.
+
 
 
 = Features =
 
-* Fully Responsive
-* Cross Browser IE8+ and Other Modern Browsers
-* HTML5 Valid and SEO Friendly Markup
-* Touch Swipe Navigation
-* Drag and drop slider creation
-* Extremely user friendly admin panel
-* CSS3 Transitions with jQuery Fallback
-* Hardware Accelerated CSS3 3D Transforms
-* Optimized for Any Screen Sizes and Touch Devices
-* Smart Loading Assets
-* 6+ Interactive Slide Transitions
-* 8 Starter Samples
-* Smart auto crop
-* Loop and Linear sliding
-* Shuffle Ordering Slides Option
-* Auto height Slider
-* Vertical and Horizontal Direction Navigation
-* Fully Customizable Thumbnail and Tabs
-* Vertical and Horizontal Bullets
-* Mouse Wheel Navigation
-* Customizable Arrows
-* Exclusive Widget and shortcodes
-* Scroll Handle Slide Indicator
-* Auto Play with Timing Options
-* Smart Memory Management
-* 6 Modern and Unique Skins
-* Timer-bar and Circle Timer UI Controls
-* Custom user roles and capabilities
-* 5 Image Positioning Options (fill, fit, tile, ..)
-* Extremely lightweight
-* Advanced Import And Export Tool
-* Built-in cache boosting
-* Translate Ready
-* Multisite Compatible
-* Extensive Developer API
+• The Most SEO Friendly Slider Plugin in Market!
+• Easy to Use Interface
+• Simply Create Fully Responsive and Device Optimized Sliders with 8 starter samples
+• Use Sliders Cross-browser and Works Well on All Popular Browsers! (Tested IE8+ and other modern browsers)
+• Superlative Lightweight Outputs in Compare with Other Plugins
+• HTML5 Valid and Clean Markups
+• Touch Swipe Navigation
+• Manage Slideshows with Autoplay Timing Options!
+• 24h Support with Expert Agents (check out our rates on WordPress)
+• Drag and Drop Slider Creation
+• Extremely User Friendly Admin Panel
+• CSS3 Transitions with jQuery Fallback
+• Hardware Accelerated CSS3 3D Transforms
+• Optimized for Any Screen Sizes and Touch Devices
+• Smart Loading Assets
+• 6+ Interactive Slide Transitions
+• Smart auto crop
+• Loop and linear sliding
+• Shuffle Ordering Slides Option
+• Auto-height Slider
+• Vertical and Horizontal Direction Navigation
+• Fully Customizable Thumbnail and Tabs
+• Vertical and Horizontal Bullets
+• Mouse Wheel Navigation
+• Customizable Arrows
+• Exclusive Widget and Shortcodes
+• Scroll Handle Slide Indicator
+• Smart Memory Management
+• 6 Modern and Unique Skins
+• Timer-bar and Circle Timer UI Controls
+• Custom User Roles and Capabilities
+• 5 Image Positioning Options (fill, fit, tile,...)
+• Advanced Import And Export Tool
+• Built-in Cache Boosting
+• Translate Ready
+• Multisite Compatible
+• Extensive Developer API
 * [Full List of Features](http://masterslider.com/wordpress/free/?mslf)
 
 
@@ -192,12 +197,16 @@ You can use automatic update to update the plugin safely.
 
 = Where can I find Master Slider documentation and user guides =
 
-If you have any question about working with "Master Slider", you can take a look at [online documentations](http://masterslider.com/doc/wp/free/)
+If you have any question about working with "Master Slider", you can take a look at [online documentations](http://docs.averta.net/display/MSWPF/)
 
-If you get stuck you can follow these [steps to get support](http://masterslider.com/doc/wp/free/#support).
+= When I preview the slider in admin page everything looks fine, but when I add it to my website the slider looks different. How can I fix that? =
+It is a known issue with few poor coded themes that can be easily fixed. In fact, some styles in your theme conflicts with the styles in Master Slider. You can simply submit a ticket in support section, our support agents will advice you how to fix the conflicts.
 
 = Will Master Slider work with my theme? =
 Master Slider works with any theme, including the default WordPress themes.
+
+= Can you recommend a free theme that is optimized for Master Slider =
+Fortunately there are plenty of options out there, including the default WordPress themes too. But the one that we recommend most is [Phlox theme](http://avt.li/msphpp "Phlox theme - Free Minimal and Responsive WordPress Theme") which is a free, versatile and optimized theme for Master Slider.
 
 = I added text to slide (slide info), but it does not appear in slider =
 You need to add "slide info" control too. To do that, go for editing slider, under "slider controls" tab, select and add "slide info" control
@@ -225,6 +234,43 @@ Bugs can be reported in our [support forums](http://wordpress.org/tags/master-sl
 11. Flexible slider controls
 
 
+== Changelog ==
+
+= 3.1.6 =
+
+= Version 3.1.6/ (09.10.2017) =
+- [Improvement]: Minor bugs fix.
+
+= Version 3.1.1/ (17.08.2017) =
+- [Improvement]: Performance improvement and bug fix.
+
+= Version 3.0.2 / (12.07.2017) =
+- [Improvement]: Some minor bugs fixed.
+
+= Version 3.0.0 / (17.06.2017) =
+- [Fix]: An issue with overlay color for slides fixed.
+- [Improvement]: The corresponding styles will be generated after duplicating the slider automatically.
+- [Improvement]: Some minor bugs fixed.
+
+= Version 2.9.8 / (15.4.2017) =
+- [Fix]: Italian translation added
+- [Fix]: Minor bugs fixed
+
+= Version 2.9.7 / (26.3.2017) =
+- [Fix]: A minor issue with PHP 7 fixed
+
+= Version 2.9.6 / (15.3.2017) =
+- [Fix]: Minor bugs fixes
+
+= Version 2.9.5 / (21.9.2016) =
+- [Fix]: Minor bugs fixes
+
+= Version 2.9.0 / (19.8.2016) =
+- [Improvement]: Better compatibility with Legacy WordPress themes
+- [Fix]: Minor bugs fixes
+
+= Version 2.8.1 / (11.7.2016) =
+- [Improvement]: Security improvement
 
 = Version 2.7.1 / (4.10.2015) =
 - [Fix]: Minor issue with an undefined variable fixed
@@ -401,5 +447,5 @@ Bugs can be reported in our [support forums](http://wordpress.org/tags/master-sl
 
 == Upgrade Notice ==
 
-= 2.7.1 =
-- [Fix]: Minor issue with an undefined variable fixed
+= Version 3.1.6/ (09.10.2017) =
+- [Improvement]: Minor bugs fix.

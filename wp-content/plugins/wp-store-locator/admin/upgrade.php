@@ -19,17 +19,14 @@ function wpsl_check_upgrade() {
 
     if ( version_compare( $current_version, '1.1', '<' ) ) {
         if ( is_array( $wpsl_settings ) ) {
-            /* Add the default value for the reset map option */
             if ( empty( $wpsl_settings['reset_map'] ) ) {
                 $wpsl_settings['reset_map'] = 0;
             }
 
-            /* Add the default value for the way the store listings are shown, either below or next to the map */
             if ( empty( $wpsl_settings['auto_load'] ) ) {
                 $wpsl_settings['auto_load'] = 1;
             }	
 
-            /* Add the default value for the route redirect */
             if ( empty( $wpsl_settings['new_window'] ) ) {
                 $wpsl_settings['new_window'] = 0;
             }  
@@ -40,12 +37,10 @@ function wpsl_check_upgrade() {
 
     if ( version_compare( $current_version, '1.2', '<' ) ) {
         if ( is_array( $wpsl_settings ) ) {
-            /* Add the default value for the way the store listings are shown, either below or next to the map */
             if ( empty( $wpsl_settings['store_below'] ) ) {
                 $wpsl_settings['store_below'] = 0;
             }	
 
-            /* Add the default value for the route redirect */
             if ( empty( $wpsl_settings['direction_redirect'] ) ) {
                 $wpsl_settings['direction_redirect'] = 0;
             }    
@@ -56,17 +51,14 @@ function wpsl_check_upgrade() {
 
     if ( version_compare( $current_version, '1.2.11', '<' ) ) {
         if ( is_array( $wpsl_settings ) ) {
-            /* Add the default value for the 'more info' link option */
             if ( empty( $wpsl_settings['more_info'] ) ) {
                 $wpsl_settings['more_info'] = 0;
             }
 
-            /* Add the default value for the 'more info' label */
             if ( empty( $wpsl_settings['more_label'] ) ) {
                 $wpsl_settings['more_label'] = __( 'More info', 'wpsl' );
             }
 
-            /* Add the default value mouse focus option */
             if ( empty( $wpsl_settings['mouse_focus'] ) ) {
                 $wpsl_settings['mouse_focus'] = 1;
             }	
@@ -77,22 +69,18 @@ function wpsl_check_upgrade() {
 
     if ( version_compare( $current_version, '1.2.12', '<' ) ) {
         if ( is_array( $wpsl_settings ) ) {
-            /* Add the default value for the 'more info link' link option */
             if ( empty( $wpsl_settings['more_info_location'] ) ) {
                 $wpsl_settings['more_info_location'] = __( 'info window', 'wpsl' ); 
             }
 
-            /* Add the default value for the back label */
             if ( empty( $wpsl_settings['back_label'] ) ) {
                 $wpsl_settings['back_label'] = __( 'Back', 'wpsl' );
             }
 
-            /* Add the default value for the reset label */
             if ( empty( $wpsl_settings['reset_label'] ) ) {
                 $wpsl_settings['reset_label'] = __( 'Reset', 'wpsl' );
             }                  
 
-            /* Add the default value for removing the scroll bar when the store listing is shown below the map */
             if ( empty( $wpsl_settings['store_below_scroll'] ) ) {
                 $wpsl_settings['store_below_scroll'] = 0;
             }  
@@ -107,10 +95,10 @@ function wpsl_check_upgrade() {
         
         $wpsl_table = $wpdb->prefix . 'wpsl_stores';
 
-        /* Rename the street field to address */
+        // Rename the street field to address.
         $wpdb->query( "ALTER TABLE $wpsl_table CHANGE street address VARCHAR(255)" );
 
-        /* Add the second address field */
+        // Add the second address field.
         $wpdb->query( "ALTER TABLE $wpsl_table ADD address2 VARCHAR(255) NULL AFTER address" );
 
         if ( is_array( $wpsl_settings ) ) {
@@ -238,7 +226,7 @@ function wpsl_check_upgrade() {
                 $wpsl_settings['hide_hours'] = 0;
             }
             
-            /* Either correct the existing map style format from the 2.0 beta or set it to empty */
+            // Either correct the existing map style format from the 2.0 beta or set it to empty.
             if ( isset( $wpsl_settings['map_style'] ) && is_array( $wpsl_settings['map_style'] ) && isset( $wpsl_settings['map_style']['id'] ) ) {
                 switch( $wpsl_settings['map_style']['id'] ) {
                     case 'custom':
@@ -282,7 +270,8 @@ function wpsl_check_upgrade() {
                 $wpsl_settings['category_dropdown'] = 0;
             }
            
-            /* Replace marker_bounce with marker_effect to better reflect what the option contains.
+            /* 
+             * Replace marker_bounce with marker_effect to better reflect what the option contains.
              * 
              * If a user hovers over the result list then either the corresponding marker will bounce,
              * the info window will open, or nothing will happen. 
@@ -294,20 +283,21 @@ function wpsl_check_upgrade() {
                 unset( $wpsl_settings['marker_bounce'] );
             }
                         
-            /* The default input for the opening hours is set to textarea for current users, 
+            /* 
+             * The default input for the opening hours is set to textarea for current users, 
              * for new users it will be set to dropdown ( easier to format in a table output and to use with schema.org in the future ).  
              */
             if ( empty( $wpsl_settings['editor_hour_input'] ) ) {
                 $wpsl_settings['editor_hour_input'] = 'textarea';
             }
             
-            /* Rename store_below_scroll to listing_below_no_scroll, it better reflects what it does */
+            // Rename store_below_scroll to listing_below_no_scroll, it better reflects what it does.
             if ( empty( $wpsl_settings['listing_below_no_scroll'] ) && isset( $wpsl_settings['store_below_scroll'] ) ) {
                 $wpsl_settings['listing_below_no_scroll'] = $wpsl_settings['store_below_scroll'];
                 unset( $wpsl_settings['store_below_scroll'] );
             }
             
-            /* Change the template ids from number based to name based */
+            // Change the template ids from number based to name based.
             if ( is_numeric( $wpsl_settings['template_id'] ) ) {
                 $wpsl_settings['template_id'] = ( !$wpsl_settings['template_id'] ) ? 'default' : 'below_map';
             }
@@ -317,19 +307,21 @@ function wpsl_check_upgrade() {
                 'search_radius' => $wpsl_settings['search_radius']
             );
 
-            /* Replace the () with [], this fixes an issue with the mod_security module that is installed on some servers. 
+            /* 
+             * Replace the () with [], this fixes an issue with the mod_security module that is installed on some servers. 
              * It triggerd a 'Possible SQL injection attack' warning probably because of the int,(int) format of the data.
              */
             foreach ( $replace_data as $index => $option_value ) {
                 $wpsl_settings[$index] = str_replace( array( '(', ')' ), array( '[', ']' ), $option_value );
             }
             
-            /* The reset button now uses an icon instead of text, so no need for the label anymore */
+            // The reset button now uses an icon instead of text, so no need for the label anymore.
             unset( $wpsl_settings['reset_label'] );
 
             update_option( 'wpsl_settings', $wpsl_settings ); 
             
-            /* Users upgrading from 1.x will be given the choice between the textarea or 
+            /* 
+             * Users upgrading from 1.x will be given the choice between the textarea or 
              * dropdowns for the opening hours. 
              * 
              * New users don't get that choice, they will only get the dropdowns. 
@@ -338,11 +330,11 @@ function wpsl_check_upgrade() {
              */
             update_option( 'wpsl_legacy_support', 1 ); 
                            
-            /* Add the WPSL roles and caps */
+            // Add the WPSL roles and caps.
             wpsl_add_roles();
             wpsl_add_caps();
 
-            /* If there is a wpsl_stores table, then we need to convert all the locations to the 'wpsl_stores' custom post type */
+            // If there is a wpsl_stores table, then we need to convert all the locations to the 'wpsl_stores' custom post type.
             if ( $wpdb->get_var( "SHOW TABLES LIKE '$wpsl_table'" ) && version_compare( $current_version, '1.9', '<' ) ) { 
                 if ( wpsl_remaining_cpt_count() ) {
                     update_option( 'wpsl_convert_cpt', 'in_progress' );
@@ -363,11 +355,57 @@ function wpsl_check_upgrade() {
     }
 
     if ( version_compare( $current_version, '2.1.0', '<' ) ) {
-        if ( empty( $wpsl_settings['api_geocode_component'] ) ) {
+        if ( !isset( $wpsl_settings['api_geocode_component'] ) ) {
             $wpsl_settings['api_geocode_component'] = 0;
         }
 
         update_option( 'wpsl_settings', $wpsl_settings ); 
+    }
+    
+    if ( version_compare( $current_version, '2.2', '<' ) ) {
+        $wpsl_settings['autocomplete'] = 0;
+        $wpsl_settings['category_default_label'] = __( 'Any', 'wpsl' );
+
+        // Rename the 'zoom_name' and 'zoom_latlng' to 'start_name' and 'start_latlng'.
+        if ( isset( $wpsl_settings['zoom_name'] ) ) {
+            $wpsl_settings['start_name'] = $wpsl_settings['zoom_name'];
+            unset( $wpsl_settings['zoom_name'] );
+        }
+
+        if ( isset( $wpsl_settings['zoom_latlng'] ) ) {
+            $wpsl_settings['start_latlng'] = $wpsl_settings['zoom_latlng'];
+            unset( $wpsl_settings['zoom_latlng'] );
+        }
+
+        if ( isset( $wpsl_settings['category_dropdown'] ) ) {
+            $wpsl_settings['category_filter'] = $wpsl_settings['category_dropdown'];
+            unset( $wpsl_settings['category_dropdown'] );
+        }
+        
+        // We now have separate browser and server key fields, and assume the existing key is a server key.
+        if ( isset( $wpsl_settings['api_key'] ) ) {
+            $wpsl_settings['api_server_key'] = $wpsl_settings['api_key'];
+            unset( $wpsl_settings['api_key'] );
+        }
+        
+        $wpsl_settings['api_browser_key']      = '';
+        $wpsl_settings['category_filter_type'] = 'dropdown';
+        $wpsl_settings['hide_country']         = 0;
+        $wpsl_settings['show_contact_details'] = 0;
+        
+        update_option( 'wpsl_settings', $wpsl_settings ); 
+    }
+    
+    if ( version_compare( $current_version, '2.2.4', '<' ) ) {
+        $wpsl_settings['deregister_gmaps'] = 0;
+        
+        update_option( 'wpsl_settings', $wpsl_settings ); 
+    }
+
+    if ( version_compare( $current_version, '2.2.9', '<' ) ) {
+        $wpsl_settings['run_fitbounds'] = 1;
+
+        update_option( 'wpsl_settings', $wpsl_settings );
     }
 
     update_option( 'wpsl_version', WPSL_VERSION_NUM );
@@ -530,7 +568,7 @@ function wpsl_convert_cpt() {
         die( '-1' );
     check_ajax_referer( 'wpsl-cpt-fix' );
 
-    /* Start the cpt coversion */
+    // Start the cpt coversion.
     wpsl_cpt_conversion();
 
     exit();
@@ -588,7 +626,8 @@ function wpsl_remaining_cpt_count() {
     $db_count   = $wpdb->get_var( "SELECT COUNT(wpsl_id) FROM $table" );
     $difference = $db_count - $cpt_count;
     
-    /* This prevents users who used the 2.0 beta, and later added 
+    /* 
+     * This prevents users who used the 2.0 beta, and later added 
      * more stores from seeing the upgrade notice again.
      */
     $remaining = ( $difference < 0 ) ? false : $difference;
@@ -606,7 +645,7 @@ function wpsl_cpt_conversion() {
     
     global $wpdb;
     
-    /* Try to disable the time limit to prevent timeouts */
+    // Try to disable the time limit to prevent timeouts.
     @set_time_limit( 0 );
 
     $meta_keys  = array( 'address', 'address2', 'city', 'state', 'zip', 'country', 'country_iso', 'lat', 'lng', 'phone', 'fax', 'url', 'email', 'hours' );
@@ -616,7 +655,7 @@ function wpsl_cpt_conversion() {
     
     foreach ( $stores as $store ) {
         
-        /* Make sure we set the correct post status */
+        // Make sure we set the correct post status.
         if ( $store->active ) {
             $post_status = 'publish';
         } else {
@@ -634,14 +673,14 @@ function wpsl_cpt_conversion() {
 
         if ( $post_id ) {
             
-            /* Save the data from the wpsl_stores db table as post meta data */
+            // Save the data from the wpsl_stores db table as post meta data.
             foreach ( $meta_keys as $meta_key ) {
                 if ( isset( $store->{$meta_key} ) && !empty( $store->{$meta_key} ) ) {
                     update_post_meta( $post_id, 'wpsl_' . $meta_key, $store->{$meta_key} );
                 }
             }
             
-            /* If we have a thumb ID set the post thumbnail for the inserted post */
+            // If we have a thumb ID set the post thumbnail for the inserted post.
             if ( $store->thumb_id ) {
                 set_post_thumbnail( $post_id, $store->thumb_id );
             }

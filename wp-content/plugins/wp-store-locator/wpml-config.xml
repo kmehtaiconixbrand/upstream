@@ -10,6 +10,7 @@
             <key name="no_results_label"/>             
             <key name="results_label"/>
             <key name="category_label"/>
+            <key name="category_default_label"/>
             <key name="more_label"/> 
             <key name="directions_label"/>
             <key name="no_directions_label"/> 

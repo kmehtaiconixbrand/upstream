@@ -1,7 +1,7 @@
 <?php
 /**
  * @package Menu_Image
- * @version 2.6.1
+ * @version 2.6.4
  * @licence GPLv2
  */
 
@@ -10,7 +10,7 @@ Plugin Name: Menu Image
 Plugin URI: http://html-and-cms.com/plugins/menu-image/
 Description: Provide uploading images to menu item
 Author: Alex Davyskiba aka Zviryatko
-Version: 2.6.3
+Version: 2.7.0
 Author URI: http://makeyoulivebetter.org.ua/
 */
 
@@ -83,6 +83,8 @@ class Menu_Image_Plugin {
 		add_action( 'wp_update_nav_menu_item', array( $this, 'wp_update_nav_menu_item_action' ), 10, 2 );
 		add_action( 'admin_init', array( $this, 'admin_init' ), 99 );
 		add_filter( 'jetpack_photon_override_image_downsize', array( $this, 'jetpack_photon_override_image_downsize_filter' ), 10, 2 );
+		// Add support of Flatsome theme dropdown menu.
+		add_filter( 'menu_image_link_attributes', array($this, 'flatsome_dropdown_fix_menu_image_link_attributes_filter'), 10, 4 );
 	}
 
 	/**
@@ -93,7 +95,7 @@ class Menu_Image_Plugin {
 		if ( !has_action( 'wp_nav_menu_item_custom_fields' ) ) {
 			add_filter( 'wp_edit_nav_menu_walker', array( $this, 'menu_image_edit_nav_menu_walker_filter' ) );
 		}
-		add_action( 'wp_nav_menu_item_custom_fields', array( $this, 'menu_item_custom_fields' ), 10, 1 );
+		add_action( 'wp_nav_menu_item_custom_fields', array( $this, 'menu_item_custom_fields' ), 10, 4 );
 	}
 
 	/**
@@ -272,6 +274,7 @@ class Menu_Image_Plugin {
 		$attributes .= !empty( $item->target ) ? ' target="' . esc_attr( $item->target ) . '"' : '';
 		$attributes .= !empty( $item->xfn ) ? ' rel="' . esc_attr( $item->xfn ) . '"' : '';
 		$attributes .= !empty( $item->url ) ? ' href="' . esc_attr( $item->url ) . '"' : '';
+		$attributes_array = shortcode_parse_atts($attributes);
 
 		$image_size = $item->image_size ? $item->image_size : apply_filters( 'menu_image_default_size', 'menu-36x36' );
 		$position   = $item->title_position ? $item->title_position : apply_filters( 'menu_image_default_title_position', 'after' );
@@ -296,8 +299,26 @@ class Menu_Image_Plugin {
 			$image = wp_get_attachment_image( $item->thumbnail_id, $image_size, false, "class=menu-image {$class}" );
 			$class .= ' menu-image-not-hovered';
 		}
+		$attributes_array['class'] = $class;
 
-		$item_output = "{$args->before}<a{$attributes} class='{$class}'>";
+		/**
+		 * Filter the menu link attributes.
+		 *
+		 * @since 2.6.7
+		 *
+		 * @param array  $attributes An array of attributes.
+		 * @param object $item      Menu item data object.
+		 * @param int    $depth     Depth of menu item. Used for padding.
+		 * @param object $args
+		 */
+		$attributes_array = apply_filters( 'menu_image_link_attributes', $attributes_array, $item, $depth, $args );
+		$attributes = '';
+		foreach ( $attributes_array as $attr_name => $attr_value ) {
+			$attributes .= "{$attr_name}=\"$attr_value\" ";
+		}
+		$attributes = trim($attributes);
+
+		$item_output = "{$args->before}<a {$attributes}>";
 		$link        = $args->link_before . apply_filters( 'the_title', $item->title, $item->ID ) . $args->link_after;
 		$none		 = ''; // Sugar.
 		switch ( $position ) {
@@ -526,9 +547,21 @@ class Menu_Image_Plugin {
 	}
 
 	/**
-	 * Add custom fields to menu item as suggest to http://shazdeh.me/2014/06/25/custom-fields-nav-menu-items/
+	 * Add custom fields to menu item.
+	 *
+	 * @param int    $item_id
+	 * @param object $item
+	 * @param int    $depth
+	 * @param array  $args
+	 *
+	 * @see http://web.archive.org/web/20141021012233/http://shazdeh.me/2014/06/25/custom-fields-nav-menu-items
+	 * @see https://core.trac.wordpress.org/ticket/18584
 	 */
-	public function menu_item_custom_fields( $item_id ) { ?>
+	public function menu_item_custom_fields( $item_id, $item, $depth, $args ) {
+		if (!$item_id && isset($item->ID)) {
+			$item_id = $item->ID;
+		}
+		?>
 		<div class="field-image hide-if-no-js wp-media-buttons">
 			<?php echo $this->wp_post_thumbnail_html( $item_id ) ?>
 		</div>
@@ -567,6 +600,25 @@ class Menu_Image_Plugin {
 	 */
 	public function isAttachmentUsed( $size, $id ) {
 		return is_string($size) && isset( $this->used_attachments[ $size ] ) && in_array( $id, $this->used_attachments[ $size ] );
+	}
+
+	/**
+	 * Fix dropdown menu for Flatsome theme.
+	 *
+	 * @param array  $attributes An array of attributes.
+	 * @param object $item      Menu item data object.
+	 * @param int    $depth     Depth of menu item. Used for padding.
+	 * @param object $args
+	 *
+	 * @return array
+	 */
+	public function flatsome_dropdown_fix_menu_image_link_attributes_filter( $attributes, $item, $depth, $args ) {
+		if (!empty($args->walker) && class_exists('FlatsomeNavDropdown') && $args->walker instanceof FlatsomeNavDropdown && $depth === 0) {
+			$class = !empty($attributes['class']) ? $attributes['class'] : '';
+			$class .= ' nav-top-link';
+			$attributes['class'] = $class;
+		}
+		return $attributes;
 	}
 }
 
@@ -666,7 +718,7 @@ class Menu_Image_Walker_Nav_Menu_Edit extends Walker_Nav_Menu_Edit {
 				</dt>
 			</dl>
 
-			<div class="menu-item-settings" id="menu-item-settings-<?php echo $item_id; ?>">
+			<div class="menu-item-settings wp-clearfix" id="menu-item-settings-<?php echo $item_id; ?>">
 				<?php if( 'custom' == $item->type ) : ?>
 					<p class="field-url description description-wide">
 						<label for="edit-menu-item-url-<?php echo $item_id; ?>">

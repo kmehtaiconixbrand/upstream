@@ -1,206 +1,333 @@
 <?php
-	// Exit if accessed directly
-	if (! defined('DUPLICATOR_INIT')) {
-		$_baseURL =  strlen($_SERVER['SERVER_NAME']) ? $_SERVER['SERVER_NAME'] : $_SERVER['HTTP_HOST'];
-		$_baseURL =  "http://" . $_baseURL;
-		header("HTTP/1.1 301 Moved Permanently");
-		header("Location: $_baseURL");
-		exit; 
-	}
+	$dbh = DUPX_DB::connect($_POST['dbhost'], $_POST['dbuser'], $_POST['dbpass'], $_POST['dbname'], $_POST['dbport']);
+
+	$all_tables     = DUPX_DB::getTables($dbh);
+	$active_plugins = DUPX_U::getActivePlugins($dbh);
+
+	$old_path = $GLOBALS['FW_WPROOT'];
+	$new_path = DUPX_U::setSafePath($GLOBALS['CURRENT_ROOT_PATH']);
+	$new_path = ((strrpos($old_path, '/') + 1) == strlen($old_path)) ? DUPX_U::addSlash($new_path) : $new_path;
 ?>
-<script type="text/javascript">		
-	/** **********************************************
-	* METHOD: Posts to page to remove install files */	
-	Duplicator.removeInstallerFiles = function(package_name) {
-		var msg = "You will now be redirected to the cleanup page.\nSelect 'Delete Reserved Files' to remove installer files.";
-		alert(msg);
-        
-        var nurl = '<?php echo rtrim($_POST['url_new'], "/"); ?>/wp-admin/admin.php?page=duplicator-tools&tab=cleanup';
-		window.open(nurl, "_blank");
-	};
-</script>
 
 
 <!-- =========================================
 VIEW: STEP 3- INPUT -->
-<form id='dup-step3-input-form' method="post" class="content-form" style="line-height:20px">
-	<input type="hidden" name="url_new" id="url_new" value="<?php echo rtrim($_POST['url_new'], "/"); ?>" />	
-	<div class="dup-logfile-link"><a href="installer-log.txt" target="_blank">installer-log.txt</a></div>
-	<h3>Step 3: Test Site</h3>
-	<hr size="1" /><br />
-	
-	<div class="title-header">
-		<div class="dup-step3-final-title">VERY IMPORTANT FINAL STEPS!</div>
-	</div>
-		
-	<table class="dup-step3-final-step">
-		<tr>
-			<td>1. <a href="javascript:void(0)" onclick="$('#dup-step3-install-report').toggle(400)">Review Install Report</a>
-			</td>
-			<td>
-				<i id="dup-step3-install-report-count">
-					<b>Errors:</b>
-					<span data-bind="with: status.step1">Deploy (<span data-bind="text: query_errs"></span>)</span> &nbsp;
-					<span data-bind="with: status.step2">Update (<span data-bind="text: err_all"></span>)</span> &nbsp; &nbsp;
-					<span data-bind="with: status.step2" style="color:#888"><b>Warnings:</b> (<span data-bind="text: warn_all"></span>)</span>
-				</i>
-			</td>
-		</tr>	
-		<tr>
-			<td style="width:170px">
-				2. <a href='<?php echo rtrim($_POST['url_new'], "/"); ?>/wp-admin/options-permalink.php' target='_blank'> Save Permalinks</a> 
-			</td>
-			<td><i>Updates URL rewrite rules in .htaccess (requires login)</i></td>
-		</tr>	
-		<tr>
-			<td>3. <a href='<?php echo $_POST['url_new']; ?>' target='_blank'>Test Site</a></td>
-			<td><i>Validate all pages, links images and plugins</i></td>
-		</tr>		
-		<tr>
-			<td>4. <a href="javascript:void(0)" onclick="Duplicator.removeInstallerFiles('<?php echo $_POST['package_name'] ?>')">Security Cleanup</a></td>
-			<td><i>Validate installer files are removed (requires login)</i></td>
-		</tr>	
-	</table><br/>
-	
-	<div class="dup-step3-go-back">
-		<i style='font-size:11px'>To re-install <a href="javascript:history.go(-2)">start over at step 1</a>.</i><br/>
-		<i style="font-size:11px;">The .htaccess file was reset.  Resave plugins that write to this file.</i>
+<form id='s3-input-form' method="post" class="content-form">
+
+	<!--  POST PARAMS -->
+	<input type="hidden" name="action_ajax"	 value="3" />
+	<input type="hidden" name="action_step"	 value="3" />
+	<input type="hidden" name="logging"		 value="<?php echo $_POST['logging'] ?>" />
+	<input type="hidden" name="retain_config" value="<?php echo $_POST['retain_config']; ?>" />
+	<input type="hidden" name="archive_name" value="<?php echo $_POST['archive_name'] ?>" />
+	<input type="hidden" name="json"		 value="<?php echo $_POST['json']; ?>" />
+	<input type="hidden" name="dbhost"		 value="<?php echo $_POST['dbhost'] ?>" />
+	<input type="hidden" name="dbport"		 value="<?php echo $_POST['dbport'] ?>" />
+	<input type="hidden" name="dbuser" 		 value="<?php echo $_POST['dbuser'] ?>" />
+	<input type="hidden" name="dbpass" 		 value="<?php echo htmlentities($_POST['dbpass']) ?>" />
+	<input type="hidden" name="dbname" 		 value="<?php echo $_POST['dbname'] ?>" />
+	<input type="hidden" name="dbcharset" 	 value="<?php echo $_POST['dbcharset'] ?>" />
+	<input type="hidden" name="dbcollate" 	 value="<?php echo $_POST['dbcollate'] ?>" />
+
+	<div class="dupx-logfile-link"><a href="installer-log.txt?now=<?php echo $GLOBALS['NOW_DATE'] ?>" target="install_log">installer-log.txt</a></div>
+	<div class="hdr-main">
+		Step <span class="step">3</span> of 4: Update Data
 	</div>
 
-
-	<!-- ========================
-	INSTALL REPORT -->
-	<div id="dup-step3-install-report" style='display:none'>
-		<table class='dup-step3-report-results' style="width:100%">
-			<tr><th colspan="4">Database Results</th></tr>
-			<tr style="font-weight:bold">
-				<td style="width:150px"></td>
-				<td>Tables</td>
-				<td>Rows</td>
-				<td>Cells</td>
-			</tr>
-			<tr data-bind="with: status.step1">
-				<td>Created</td>
-				<td><span data-bind="text: table_count"></span></td>
-				<td><span data-bind="text: table_rows"></span></td>
-				<td>n/a</td>
-			</tr>	
-			<tr data-bind="with: status.step2">
-				<td>Scanned</td>
-				<td><span data-bind="text: scan_tables"></span></td>        
-				<td><span data-bind="text: scan_rows"></span></td>
-				<td><span data-bind="text: scan_cells"></span></td>
-			</tr>
-			<tr data-bind="with: status.step2">
-				<td>Updated</td>
-				<td><span data-bind="text: updt_tables"></span></td>        
-				<td><span data-bind="text: updt_rows"></span></td>
-				<td><span data-bind="text: updt_cells"></span></td>
-			</tr>
-		</table>
-		
-		<table class='dup-step3-report-errs' style="width:100%; border-top:none">
-			<tr><th colspan="4">Errors &amp; Warnings <br/> <i style="font-size:10px; font-weight:normal">(click links below to view details)</i></th></tr>
+	<!-- ====================================
+    NEW SETTINGS
+    ==================================== -->
+	<div class="hdr-sub1" style="margin-top:8px" data-type="toggle" data-target="#s3-new-settings">
+		<a href="javascript:void(0)"><i class="dupx-minus-square"></i> New Settings</a>
+	</div>
+	<div id='s3-new-settings'>
+		<table class="s3-table-inputs">
 			<tr>
-				<td data-bind="with: status.step1">
-					<a href="javascript:void(0);" onclick="$('#dup-step3-errs-create').toggle(400)">Step1: Deploy Errors (<span data-bind="text: query_errs"></span>)</a><br/>
-				</td>
-				<td data-bind="with: status.step2">
-					<a href="javascript:void(0);" onclick="$('#dup-step3-errs-upd').toggle(400)">Step2: Update Errors (<span data-bind="text: err_all"></span>)</a>
-				</td>
-				<td data-bind="with: status.step2">
-					<a href="#dup-step2-errs-warn-anchor" onclick="$('#dup-step3-warnlist').toggle(400)">General Warnings (<span data-bind="text: warn_all"></span>)</a>
+				<td style="width:80px">URL:</td>
+				<td>
+					<input type="text" name="url_new" id="url_new" value="" />
+					<a href="javascript:DUPX.getNewURL('url_new')" style="font-size:12px">get</a>
 				</td>
 			</tr>
-			<tr><td colspan="4"></td></tr>
+			<tr>
+				<td>Path:</td>
+				<td><input type="text" name="path_new" id="path_new" value="<?php echo $new_path ?>" /></td>
+			</tr>
+			<tr>
+				<td>Title:</td>
+				<td><input type="text" name="blogname" id="blogname" value="<?php echo $GLOBALS['FW_BLOGNAME'] ?>" /></td>
+			</tr>
 		</table>
-		
-		
-		<div id="dup-step3-errs-create" class="dup-step3-err-msg">
-		
-			<b data-bind="with: status.step1">STEP 1: DEPLOY ERRORS (<span data-bind="text: query_errs"></span>)</b><br/>
-			<div class="info">Queries that error during the deploy process are logged to the <a href="installer-log.txt" target="_blank">install-log.txt</a> file.  
-			To view the error result look under the section titled 'DATABASE RESULTS'.  If errors are present they will be marked with '**ERROR**'. <br/><br/>  For errors titled
-			'Query size limit' you will need to manually post the values or update your mysql server with the max_allowed_packet setting to handle larger payloads.
-			If your on a hosted server you will need to contact the server admin, for more details see: https://dev.mysql.com/doc/refman/5.5/en/packet-too-large.html. <br/><br/>
-			</div>
-			
-		</div>
-		
+	</div>
+	<br/><br/>
 
-		<div id="dup-step3-errs-upd" class="dup-step3-err-msg">
-		
-			<!-- MYSQL QUERY ERRORS -->
-			<b data-bind="with: status.step2">STEP2: UPDATE ERRORS (<span data-bind="text: errsql_sum"></span>) </b><br/>
-			<div class="info">Errors that show here are the result of queries that could not be performed.</div>
-			<div class="content">
-				<div data-bind="foreach: status.step2.errsql"><div data-bind="text: $data"></div></div>
-				<div data-bind="visible: status.step2.errsql.length == 0">No MySQL query errors found</div>
-			</div>
-			
-			<!-- TABLE KEY ERRORS -->
-			<b data-bind="with: status.step2">TABLE KEY ERRORS (<span data-bind="text: errkey_sum"></span>)</b><br/>
-			<div class="info">
-				A primary key is required on a table to efficiently run the update engine. Below is a list of tables and the rows that will need to 
-				be manually updated.  Use the query below to find the data.<br/>
-				<i>SELECT @row := @row + 1 as row, t.* FROM some_table t, (SELECT @row := 0) r</i>
-			</div>
-			<div class="content">
-				<div data-bind="foreach: status.step2.errkey"><div data-bind="text: $data"></div></div>
-				<div data-bind="visible: status.step2.errkey.length == 0">No missing primary key errors</div>
-			</div>
-			
-			<!-- SERIALIZE ERRORS -->
-			<b data-bind="with: status.step2">SERIALIZATION ERRORS  (<span data-bind="text: errser_sum"></span>)</b><br/>
-			<div class="info">
-				Use the SQL below to display data that may have not been updated correctly during the serialization process.
-			</div>
-			<div class="content">
-				<div data-bind="foreach: status.step2.errser"><div data-bind="text: $data"></div></div>
-				<div data-bind="visible: status.step2.errser.length == 0">No serialization errors found</div>
-			</div>			
-			
+    <!-- ====================================
+    OPTIONS
+    ==================================== -->
+    <div class="hdr-sub1" data-type="toggle" data-target="#s3-adv-opts">
+        <a href="javascript:void(0)"><i class="dupx-plus-square"></i> Options</a>
+    </div>
+	<div id='s3-adv-opts' style="display:none;">
+		<div class="help-target"><a href="?help#help-s3" target="_blank">[help]</a></div>
+		<br/>
+
+		<div class="hdr-sub3">New Admin Account</div>
+		<div style="text-align: center; margin-top:7px">
+			<i style="color:gray;font-size: 11px">This feature is optional.  If the username already exists the account will NOT be created or updated.</i>
 		</div>
+		<table class="s3-table-inputs">
+			<tr>
+				<td>Username:</td>
+				<td><input type="text" name="wp_username" id="wp_username" value="" title="4 characters minimum" placeholder="(4 or more characters)" /></td>
+			</tr>
+			<tr>
+				<td valign="top">Password:</td>
+				<td><input type="text" name="wp_password" id="wp_password" value="" title="6 characters minimum"  placeholder="(6 or more characters)" /></td>
+			</tr>
+		</table>
+		<br/><br/>
+
+		<div class="hdr-sub3">Scan Options</div>
+        <table class="s3-table-inputs">
+			<tr>
+				<td>Site URL:</td>
+				<td>
+					<input type="text" name="siteurl" id="siteurl" value="" />
+					<a href="javascript:DUPX.getNewURL('siteurl')" style="font-size:12px">get</a><br/>
+				</td>
+			</tr> 
+            <tr>
+                <td>Old URL:</td>
+                <td>
+                    <input type="text" name="url_old" id="url_old" value="<?php echo $GLOBALS['FW_URL_OLD'] ?>" readonly="readonly"  class="readonly" />
+                    <a href="javascript:DUPX.editOldURL()" id="edit_url_old" style="font-size:12px">edit</a>
+                </td>
+            </tr>
+            <tr>
+                <td>Old Path:</td>
+                <td>
+                    <input type="text" name="path_old" id="path_old" value="<?php echo $old_path ?>" readonly="readonly"  class="readonly" />
+                    <a href="javascript:DUPX.editOldPath()" id="edit_path_old" style="font-size:12px">edit</a>
+                </td>
+            </tr>
+        </table><br/>
+        
+		<table>
+			<tr>
+				<td style="padding-right:10px">
+                    <b>Scan Tables:</b>
+					<div class="s3-allnonelinks">
+						<a href="javascript:void(0)" onclick="$('#tables option').prop('selected',true);">[All]</a>
+						<a href="javascript:void(0)" onclick="$('#tables option').prop('selected',false);">[None]</a>
+					</div><br style="clear:both" />
+					<select id="tables" name="tables[]" multiple="multiple" style="width:315px; height:100px">
+						<?php
+						foreach( $all_tables as $table ) {
+							echo '<option selected="selected" value="' . DUPX_U::escapeHTML( $table ) . '">' . $table . '</option>';
+						}
+						?>
+					</select>
+
+				</td>
+				<td valign="top">
+                    <b>Activate Plugins:</b>
+					<div class="s3-allnonelinks">
+						<a href="javascript:void(0)" onclick="$('#plugins option').prop('selected',true);">[All]</a>
+						<a href="javascript:void(0)" onclick="$('#plugins option').prop('selected',false);">[None]</a>
+					</div><br style="clear:both" />
+					<select id="plugins" name="plugins[]" multiple="multiple" style="width:315px; height:100px">
+						<?php
+						foreach ($active_plugins as $plugin) {
+							echo '<option selected="selected" value="' . DUPX_U::escapeHTML( $plugin ) . '">' . dirname($plugin) . '</option>';
+						}
+						?>
+					</select>
+				</td>
+			</tr>
+		</table>
+		<br/>
+
+		<input type="checkbox" name="fullsearch" id="fullsearch" value="1" /> <label for="fullsearch">Use Database Full Search Mode </label><br/>
+		<input type="checkbox" name="postguid" id="postguid" value="1" /> <label for="postguid">Keep Post GUID Unchanged</label><br/>
+		<br/><br/>
 		
-		
-		<!-- WARNINGS-->
-		<div id="dup-step3-warnlist" class="dup-step3-err-msg">
-			<a href="#" id="dup-step2-errs-warn-anchor"></a>
-			<b>GENERAL WARNINGS</b><br/>
-			<div class="info">
-				The following is a list of warnings that may need to be fixed in order to finalize your setup.  For more details about
-				warnings see the <a href="http://codex.wordpress.org/" target="_blank">wordpress codex.</a>.
-			</div>
-			<div class="content">
-				<div data-bind="foreach: status.step2.warnlist">
-					 <div data-bind="text: $data"></div>
-				</div>
-				<div data-bind="visible: status.step2.warnlist.length == 0">
-					No warnings found
-				</div>
-			</div>
-		</div><br/>
-		
-		
-	</div><br/><br/>
-		
-	<div class='dup-step3-connect'>
-		<a href="installer.php?help=1#troubleshoot" target="_blank">Troubleshoot</a> | 
-		<a href='http://support.lifeinthegrid.com/knowledgebase.php' target='_blank'>FAQs</a> | 
-		<a href='http://lifeinthegrid.com/duplicator' target='_blank'>Support</a> | 
-		<a href='http://snapcreek.com/duplicator/' target='_blank'>Go Pro!</a>
-	</div><br/>
+		<!-- WP-CONFIG -->
+		<div class="hdr-sub3">WP-Config File</div>
+		<table class="dupx-opts dupx-advopts">
+			<tr>
+				<td>Cache:</td>
+				<td style="width:125px"><input type="checkbox" name="cache_wp" id="cache_wp" /> <label for="cache_wp">Keep Enabled</label></td>
+				<td><input type="checkbox" name="cache_path" id="cache_path" /> <label for="cache_path">Keep Home Path</label></td>
+			</tr>
+			<tr>
+				<td>SSL:</td>
+				<td><input type="checkbox" name="ssl_admin" id="ssl_admin" /> <label for="ssl_admin">Enforce on Admin</label></td>
+				<td></td>
+			</tr>
+		</table>
+		<br/><br/><br/>
+		<br/><br/>
+	</div>
+
+	<div class="dupx-footer-buttons">
+		<input id="dup-step3-next"  class="default-btn" type="button" value=" Next " onclick="DUPX.runUpdate()"  />
+	</div>
 </form>
 
-<script type="text/javascript">
-	MyViewModel = function() { 
-		this.status = <?php echo urldecode($_POST['json']); ?>;
-		var errorCount =  this.status.step2.err_all || 0;
-		(errorCount >= 1 )
-			? $('#dup-step3-install-report-count').css('color', '#BE2323')
-			: $('#dup-step3-install-report-count').css('color', '#197713')
-	};
-	ko.applyBindings(new MyViewModel());
+
+<!-- =========================================
+VIEW: STEP 3 - AJAX RESULT 
+========================================= -->
+<form id='s3-result-form' method="post" class="content-form" style="display:none">
+
+	<div class="dupx-logfile-link"><a href="installer-log.txt" target="install_log">installer-log.txt</a></div>
+	<div class="hdr-main">
+		Step <span class="step">3</span> of 4: Update Data
+	</div>
+
+	<!--  POST PARAMS -->
+	<div class="dupx-debug">
+		<input type="hidden" name="action_step"  value="4" />
+		<input type="hidden" name="archive_name" value="<?php echo $_POST['archive_name'] ?>" />
+		<input type="hidden" name="retain_config" value="<?php echo $_POST['retain_config']; ?>" />
+		<input type="hidden" name="url_new" id="ajax-url_new"  />
+		<input type="hidden" name="json"    id="ajax-json" />
+		<br/>
+		<input type='submit' value='manual submit'>
+	</div>
+
+	<!--  PROGRESS BAR -->
+	<div id="progress-area">
+		<div style="width:500px; margin:auto">
+			<h3>Updating Data Replacements Please Wait...</h3>
+			<div id="progress-bar"></div>
+			<i>This may take several minutes</i>
+		</div>
+	</div>
+
+	<!--  AJAX SYSTEM ERROR -->
+	<div id="ajaxerr-area" style="display:none">
+		<p>Please try again an issue has occurred.</p>
+		<div style="padding: 0px 10px 10px 10px;">
+			<div id="ajaxerr-data">An unknown issue has occurred with the update data set up process.  Please see the installer-log.txt file for more details.</div>
+			<div style="text-align:center; margin:10px auto 0px auto">
+				<input type="button"  class="default-btn" onclick='DUPX.hideErrorResult2()' value="&laquo; Try Again" /><br/><br/>
+				<i style='font-size:11px'>See online help for more details at <a href='https://snapcreek.com/ticket?utm_source=duplicator_free&utm_medium=wordpress_plugin&utm_campaign=problem_resolution&utm_content=inst_step3_ajax' target='_blank'>snapcreek.com</a></i>
+			</div>
+		</div>
+	</div>
+</form>
+
+<script>
+/** 
+* Timeout (10000000 = 166 minutes) */
+DUPX.runUpdate = function()
+{
+	//Validation
+	var wp_username = $.trim($("#wp_username").val()).length || 0;
+	var wp_password = $.trim($("#wp_password").val()).length || 0;
+
+	if ( $.trim($("#url_new").val()) == "" )  {alert("The 'New URL' field is required!"); return false;}
+	if ( $.trim($("#siteurl").val()) == "" )  {alert("The 'Site URL' field is required!"); return false;}
+	if (wp_username >= 1 && wp_username < 4) {alert("The New Admin Account 'Username' must be four or more characters"); return false;}
+	if (wp_username >= 4 && wp_password < 6) {alert("The New Admin Account 'Password' must be six or more characters"); return false;}
+
+	$.ajax({
+		type: "POST",
+		timeout: 1800000,
+		dataType: "json",
+		url: window.location.href,
+		data: $('#s3-input-form').serialize(),
+		beforeSend: function() {
+			DUPX.showProgressBar();
+			$('#s3-input-form').hide();
+			$('#s3-result-form').show();
+		},
+		success: function(data){
+			if (typeof(data) != 'undefined' && data.step3.pass == 1) {
+				$("#ajax-url_new").val($("#url_new").val());
+				$("#ajax-json").val(escape(JSON.stringify(data)));
+				<?php if (! $GLOBALS['DUPX_DEBUG']) : ?>
+					setTimeout(function(){$('#s3-result-form').submit();}, 500);
+				<?php endif; ?>
+				$('#progress-area').fadeOut(1000);
+			} else {
+				DUPX.hideProgressBar();
+			}
+		},
+		error: function(xhr) {
+			var status  = "<b>Server Code:</b> "	+ xhr.status		+ "<br/>";
+			status += "<b>Status:</b> "				+ xhr.statusText	+ "<br/>";
+			status += "<b>Response:</b> "			+ xhr.responseText  + "";
+			status += "<hr/><b>Additional Troubleshooting Tips:</b><br/>";
+			status += "- Check the <a href='installer-log.txt' target='install_log'>installer-log.txt</a> file for warnings or errors.<br/>";
+			status += "- Check the web server and PHP error logs. <br/>";
+			status += "- For timeout issues visit the <a href='https://snapcreek.com/duplicator/docs/faqs-tech/?utm_source=duplicator_free&utm_medium=wordpress_plugin&utm_campaign=problem_resolution&utm_content=inst_step3_ajax_rundepl#faq-trouble-100-q' target='_blank'>Timeout FAQ Section</a><br/>";
+			$('#ajaxerr-data').html(status);
+			DUPX.hideProgressBar();
+		}
+	});
+}
+
+/** Returns the windows active url */
+DUPX.getNewURL = function(id)
+{
+	var filename= window.location.pathname.split('/').pop() || 'installer.php' ;
+	var path = window.location.href.replace(filename, '').replace(/\/$/, '');
+	$("#" + id).val(path);
+}
+
+/** Allows user to edit the package url  */
+DUPX.editOldURL = function()
+{
+	var msg = 'This is the URL that was generated when the package was created.\n';
+	msg += 'Changing this value may cause issues with the install process.\n\n';
+	msg += 'Only modify  this value if you know exactly what the value should be.\n';
+	msg += 'See "General Settings" in the WordPress Administrator for more details.\n\n';
+	msg += 'Are you sure you want to continue?';
+
+	if (confirm(msg)) {
+		$("#url_old").removeAttr('readonly');
+		$("#url_old").removeClass('readonly');
+		$('#edit_url_old').hide('slow');
+	}
+}
+
+/** Allows user to edit the package path  */
+DUPX.editOldPath = function()
+{
+	var msg = 'This is the SERVER URL that was generated when the package was created.\n';
+	msg += 'Changing this value may cause issues with the install process.\n\n';
+	msg += 'Only modify  this value if you know exactly what the value should be.\n';
+	msg += 'Are you sure you want to continue?';
+
+	if (confirm(msg)) {
+		$("#path_old").removeAttr('readonly');
+		$("#path_old").removeClass('readonly');
+		$('#edit_path_old').hide('slow');
+	}
+}
+
+/** Go back on AJAX result view */
+DUPX.hideErrorResult2 = function()
+{
+	$('#s3-result-form').hide();
+	$('#s3-input-form').show(200);
+}
+
+//DOCUMENT LOAD
+$(document).ready(function()
+{
+	DUPX.getNewURL('url_new');
+	DUPX.getNewURL('siteurl');
+	$("*[data-type='toggle']").click(DUPX.toggleClick);
+	$("#wp_password").passStrength({
+			shortPass: 		"top_shortPass",
+			badPass:		"top_badPass",
+			goodPass:		"top_goodPass",
+			strongPass:		"top_strongPass",
+			baseStyle:		"top_testresult",
+			userid:			"#wp_username",
+			messageloc:		1	});
+});
 </script>
- 
- 

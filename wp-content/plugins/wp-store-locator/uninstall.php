@@ -74,4 +74,9 @@ function wpsl_uninstall() {
              WHERE tt.taxonomy = 'wpsl_store_category'";
     
     $wpdb->query( $sql );
+
+    // Remove the WPSL caps and roles.
+    include_once( 'admin/roles.php' );
+
+    wpsl_remove_caps_and_roles();
 }

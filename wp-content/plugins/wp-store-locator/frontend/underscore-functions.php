@@ -51,14 +51,34 @@ function wpsl_create_underscore_templates( $template ) {
         $listing_template .= "\t\t\t\t" . '<span class="wpsl-street"><%= address2 %></span>' . "\r\n";
         $listing_template .= "\t\t\t\t" . '<% } %>' . "\r\n";
         $listing_template .= "\t\t\t\t" . '<span>' . wpsl_address_format_placeholders() . '</span>' . "\r\n"; // Use the correct address format
-        $listing_template .= "\t\t\t\t" . '<span class="wpsl-country"><%= country %></span>' . "\r\n";
+
+        if ( !$wpsl_settings['hide_country'] ) {
+            $listing_template .= "\t\t\t\t" . '<span class="wpsl-country"><%= country %></span>' . "\r\n";
+        }
+        
         $listing_template .= "\t\t\t" . '</p>' . "\r\n";
+        
+        // Show the phone, fax or email data if they exist.
+        if ( $wpsl_settings['show_contact_details'] ) {
+            $listing_template .= "\t\t\t" . '<p class="wpsl-contact-details">' . "\r\n";
+            $listing_template .= "\t\t\t" . '<% if ( phone ) { %>' . "\r\n";
+            $listing_template .= "\t\t\t" . '<span><strong>' . esc_html( $wpsl->i18n->get_translation( 'phone_label', __( 'Phone', 'wpsl' ) ) ) . '</strong>: <%= formatPhoneNumber( phone ) %></span>' . "\r\n";
+            $listing_template .= "\t\t\t" . '<% } %>' . "\r\n";
+            $listing_template .= "\t\t\t" . '<% if ( fax ) { %>' . "\r\n";
+            $listing_template .= "\t\t\t" . '<span><strong>' . esc_html( $wpsl->i18n->get_translation( 'fax_label', __( 'Fax', 'wpsl' ) ) ) . '</strong>: <%= fax %></span>' . "\r\n";
+            $listing_template .= "\t\t\t" . '<% } %>' . "\r\n";
+            $listing_template .= "\t\t\t" . '<% if ( email ) { %>' . "\r\n";
+            $listing_template .= "\t\t\t" . '<span><strong>' . esc_html( $wpsl->i18n->get_translation( 'email_label', __( 'Email', 'wpsl' ) ) ) . '</strong>: <%= email %></span>' . "\r\n";
+            $listing_template .= "\t\t\t" . '<% } %>' . "\r\n";
+            $listing_template .= "\t\t\t" . '</p>' . "\r\n";
+        }
+        
         $listing_template .= "\t\t\t" . wpsl_more_info_template() . "\r\n"; // Check if we need to show the 'More Info' link and info
         $listing_template .= "\t\t" . '</div>' . "\r\n";
         $listing_template .= "\t\t" . '<div class="wpsl-direction-wrap">' . "\r\n";
         
         if ( !$wpsl_settings['hide_distance'] ) {
-            $listing_template .= "\t\t\t" . '<%= distance %> ' . esc_html( $wpsl_settings['distance_unit'] ) . '' . "\r\n";
+            $listing_template .= "\t\t\t" . '<%= distance %> ' . esc_html( wpsl_get_distance_unit() ) . '' . "\r\n";
         }
         
         $listing_template .= "\t\t\t" . '<%= createDirectionUrl() %>' . "\r\n"; 
@@ -81,7 +101,11 @@ function wpsl_create_underscore_templates( $template ) {
         $cpt_info_window_template .= "\t\t\t" . '<span><%= address2 %></span>' . "\r\n";
         $cpt_info_window_template .= "\t\t\t" . '<% } %>' . "\r\n";
         $cpt_info_window_template .= "\t\t\t" . '<span>' . wpsl_address_format_placeholders() . '</span>' . "\r\n"; // Use the correct address format 
-        $cpt_info_window_template .= "\t\t\t" . '<span class="wpsl-country"><%= country %></span>' . "\r\n"; 
+        
+        if ( !$wpsl_settings['hide_country'] ) {
+            $cpt_info_window_template .= "\t\t\t" . '<span class="wpsl-country"><%= country %></span>' . "\r\n"; 
+        }
+        
         $cpt_info_window_template .= "\t\t" . '</p>' . "\r\n";
         $cpt_info_window_template .= "\t" . '</div>';
 
@@ -116,17 +140,20 @@ function wpsl_more_info_template() {
             $more_info_template .= "\t\t\t\t" . '<% if ( description ) { %>' . "\r\n";
             $more_info_template .= "\t\t\t\t" . '<%= description %>' . "\r\n";
             $more_info_template .= "\t\t\t\t" . '<% } %>' . "\r\n";
-            $more_info_template .= "\t\t\t\t" . '<p>' . "\r\n";
-            $more_info_template .= "\t\t\t\t" . '<% if ( phone ) { %>' . "\r\n";
-            $more_info_template .= "\t\t\t\t" . '<span><strong>' . esc_html( $wpsl->i18n->get_translation( 'phone_label', __( 'Phone', 'wpsl' ) ) ) . '</strong>: <%= formatPhoneNumber( phone ) %></span>' . "\r\n";
-            $more_info_template .= "\t\t\t\t" . '<% } %>' . "\r\n";
-            $more_info_template .= "\t\t\t\t" . '<% if ( fax ) { %>' . "\r\n";
-            $more_info_template .= "\t\t\t\t" . '<span><strong>' . esc_html( $wpsl->i18n->get_translation( 'fax_label', __( 'Fax', 'wpsl' ) ) ) . '</strong>: <%= fax %></span>' . "\r\n";
-            $more_info_template .= "\t\t\t\t" . '<% } %>' . "\r\n";
-            $more_info_template .= "\t\t\t\t" . '<% if ( email ) { %>' . "\r\n";
-            $more_info_template .= "\t\t\t\t" . '<span><strong>' . esc_html( $wpsl->i18n->get_translation( 'email_label', __( 'Email', 'wpsl' ) ) ) . '</strong>: <%= email %></span>' . "\r\n";
-            $more_info_template .= "\t\t\t\t" . '<% } %>' . "\r\n";
-            $more_info_template .= "\t\t\t\t" . '</p>' . "\r\n";
+            
+            if ( !$wpsl_settings['show_contact_details'] ) {
+                $more_info_template .= "\t\t\t\t" . '<p>' . "\r\n";
+                $more_info_template .= "\t\t\t\t" . '<% if ( phone ) { %>' . "\r\n";
+                $more_info_template .= "\t\t\t\t" . '<span><strong>' . esc_html( $wpsl->i18n->get_translation( 'phone_label', __( 'Phone', 'wpsl' ) ) ) . '</strong>: <%= formatPhoneNumber( phone ) %></span>' . "\r\n";
+                $more_info_template .= "\t\t\t\t" . '<% } %>' . "\r\n";
+                $more_info_template .= "\t\t\t\t" . '<% if ( fax ) { %>' . "\r\n";
+                $more_info_template .= "\t\t\t\t" . '<span><strong>' . esc_html( $wpsl->i18n->get_translation( 'fax_label', __( 'Fax', 'wpsl' ) ) ) . '</strong>: <%= fax %></span>' . "\r\n";
+                $more_info_template .= "\t\t\t\t" . '<% } %>' . "\r\n";
+                $more_info_template .= "\t\t\t\t" . '<% if ( email ) { %>' . "\r\n";
+                $more_info_template .= "\t\t\t\t" . '<span><strong>' . esc_html( $wpsl->i18n->get_translation( 'email_label', __( 'Email', 'wpsl' ) ) ) . '</strong>: <%= email %></span>' . "\r\n";
+                $more_info_template .= "\t\t\t\t" . '<% } %>' . "\r\n";
+                $more_info_template .= "\t\t\t\t" . '</p>' . "\r\n";
+            }
 
             if ( !$wpsl_settings['hide_hours'] ) {
                 $more_info_template .= "\t\t\t\t" . '<% if ( hours ) { %>' . "\r\n";
@@ -175,10 +202,10 @@ function wpsl_store_header_template( $location = 'info_window' ) {
     if ( $wpsl_settings['permalinks'] ) {
         
         /**
-         * It's possible the permalinks are enabled, but not included in 
-         * the location data on pages where the [wpsl_map] shortcode is used. 
+         * It's possible the permalinks are enabled, but not included in the location data on 
+         * pages where the [wpsl_map] shortcode is used. 
          * 
-         * So we need to check for undefined, which isn't necesary in all other cases.
+         * So we need to check for undefined, which isn't necessary in all other cases.
          */
         if ( $location == 'wpsl_map') {
             $header_template = '<% if ( typeof permalink !== "undefined" ) { %>' . "\r\n";

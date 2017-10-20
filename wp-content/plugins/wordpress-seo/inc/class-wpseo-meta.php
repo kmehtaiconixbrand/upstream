@@ -100,17 +100,19 @@ class WPSEO_Meta {
 	public static $meta_fields = array(
 		'general'  => array(
 			'snippetpreview' => array(
-				'type'  => 'snippetpreview',
-				'title' => '', // Translation added later.
-				'help'  => '', // Translation added later.
+				'type'         => 'snippetpreview',
+				'title'        => '', // Translation added later.
+				'help'         => '', // Translation added later.
+				'help-button'  => '', // Translation added later.
 			),
 			'focuskw_text_input' => array(
-				'type'          => 'text',
+				'type'          => 'focuskeyword',
 				'title'         => '', // Translation added later.
 				'default_value' => '',
 				'autocomplete'  => false,
 				'help'          => '', // Translation added later.
 				'description'   => '<div id="focuskwresults"></div>',
+				'help-button'   => '', // Translation added later.
 			),
 			'focuskw' => array(
 				'type'  => 'hidden',
@@ -138,17 +140,24 @@ class WPSEO_Meta {
 				'default_value' => '0',
 				'description'   => '',
 			),
+			'content_score'  => array(
+				'type'          => 'hidden',
+				'title'         => 'content_score',
+				'default_value' => '0',
+				'description'   => '',
+			),
 			'metakeywords'   => array(
-				'type'          => 'text',
+				'type'          => 'metakeywords',
 				'title'         => '', // Translation added later.
 				'default_value' => '',
 				'class'         => 'metakeywords',
 				'description'   => '', // Translation added later.
 			),
 			'pageanalysis'   => array(
-				'type'  => 'pageanalysis',
-				'title' => '', // Translation added later.
-				'help'  => '', // Translation added later.
+				'type'         => 'pageanalysis',
+				'title'        => '', // Translation added later.
+				'help'         => '', // Translation added later.
+				'help-button'  => '', // Translation added later.
 			),
 		),
 		'advanced' => array(
@@ -179,7 +188,6 @@ class WPSEO_Meta {
 				'options'       => array(
 					'-'            => '', // Site-wide default - translation added later.
 					'none'         => '', // Translation added later.
-					'noodp'        => '', // Translation added later.
 					'noimageindex' => '', // Translation added later.
 					'noarchive'    => '', // Translation added later.
 					'nosnippet'    => '', // Translation added later.
@@ -239,7 +247,6 @@ class WPSEO_Meta {
 	private static $social_networks = array(
 		'opengraph'  => 'opengraph',
 		'twitter'    => 'twitter',
-		'googleplus' => 'google-plus',
 	);
 
 	/**
@@ -291,12 +298,10 @@ class WPSEO_Meta {
 		foreach ( self::$meta_fields as $subset => $field_group ) {
 			foreach ( $field_group as $key => $field_def ) {
 				if ( $field_def['type'] !== 'snippetpreview' ) {
-					/**
-					 * Function register_meta() is undocumented and not used by WP internally, wrapped in
-					 * function_exists as a precaution in case they remove it.
-					 */
 					if ( $register === true ) {
-						register_meta( 'post', self::$meta_prefix . $key, array( __CLASS__, 'sanitize_post_meta' ) );
+						register_meta( 'post', self::$meta_prefix . $key, array(
+							'sanitize_callback' => array( __CLASS__, 'sanitize_post_meta' ),
+						) );
 					}
 					else {
 						add_filter( 'sanitize_post_meta_' . self::$meta_prefix . $key, array( __CLASS__, 'sanitize_post_meta' ), 10, 2 );
@@ -380,7 +385,7 @@ class WPSEO_Meta {
 
 				$options = WPSEO_Options::get_options( array( 'wpseo', 'wpseo_titles', 'wpseo_internallinks' ) );
 
-				if ( ! current_user_can( 'manage_options' ) && $options['disableadvanced_meta'] ) {
+				if ( ! WPSEO_Capability_Utils::current_user_can( 'wpseo_edit_advanced_metadata' ) && $options['disableadvanced_meta'] ) {
 					return array();
 				}
 
@@ -396,23 +401,14 @@ class WPSEO_Meta {
 				$field_defs['meta-robots-noindex']['options']['0'] = sprintf( $field_defs['meta-robots-noindex']['options']['0'], ( ( isset( $options[ 'noindex-' . $post_type ] ) && $options[ 'noindex-' . $post_type ] === true ) ? 'noindex' : 'index' ) );
 
 				/* Adjust the robots advanced 'site-wide default' text string based on those settings */
-				if ( $options['noodp'] !== false ) {
-					$robots_adv = array();
-					if ( $options['noodp'] === true ) {
-						// Use translation from field def options - mind that $options and $field_def['options'] keys should be the same!
-						$robots_adv[] = $field_defs['meta-robots-adv']['options']['noodp'];
-					}
-					$robots_adv = implode( ', ', $robots_adv );
-				}
-				else {
-					$robots_adv = __( 'None', 'wordpress-seo' );
-				}
+				$robots_adv = __( 'None', 'wordpress-seo' );
+
 				$field_defs['meta-robots-adv']['options']['-'] = sprintf( $field_defs['meta-robots-adv']['options']['-'], $robots_adv );
 				unset( $robots_adv );
 
 
 				/* Don't show the breadcrumb title field if breadcrumbs aren't enabled */
-				if ( $options['breadcrumbs-enable'] !== true ) {
+				if ( $options['breadcrumbs-enable'] !== true && ! current_theme_supports( 'yoast-seo-breadcrumbs' ) ) {
 					unset( $field_defs['bctitle'] );
 				}
 
@@ -460,7 +456,6 @@ class WPSEO_Meta {
 				}
 				break;
 
-
 			case ( $field_def['type'] === 'checkbox' ):
 				// Only allow value if it's one of the predefined options.
 				if ( in_array( $meta_value, array( 'on', 'off' ), true ) ) {
@@ -492,7 +487,7 @@ class WPSEO_Meta {
 				break;
 
 
-			case ( $field_def['type'] === 'upload' && $meta_key === self::$meta_prefix . 'opengraph-image' ):
+			case ( $field_def['type'] === 'upload' && in_array( $meta_key, array( self::$meta_prefix . 'opengraph-image', self::$meta_prefix . 'twitter-image' ), true ) ):
 				// Validate as url.
 				$url = WPSEO_Utils::sanitize_url( $meta_value, array( 'http', 'https', 'ftp', 'ftps' ) );
 				if ( $url !== '' ) {
@@ -519,6 +514,19 @@ class WPSEO_Meta {
 			default:
 				if ( is_string( $meta_value ) ) {
 					$clean = WPSEO_Utils::sanitize_text_field( trim( $meta_value ) );
+				}
+
+				if ( $meta_key === self::$meta_prefix . 'focuskw' ) {
+					$clean = str_replace( array(
+						'&lt;',
+						'&gt;',
+						'&quot',
+						'&#96',
+						'<',
+						'>',
+						'"',
+						'`',
+					), '', $clean );
 				}
 				break;
 		}
@@ -584,7 +592,7 @@ class WPSEO_Meta {
 	 *
 	 * @static
 	 *
-	 * @param  null   $null       Old, disregard.
+	 * @param  bool   $check      The current status to allow updating metadata for the given type.
 	 * @param  int    $object_id  ID of the current object for which the meta is being updated.
 	 * @param  string $meta_key   The full meta key (including prefix).
 	 * @param  string $meta_value New meta value.
@@ -592,7 +600,7 @@ class WPSEO_Meta {
 	 *
 	 * @return null|bool          true = stop saving, null = continue saving
 	 */
-	public static function remove_meta_if_default( $null, $object_id, $meta_key, $meta_value, $prev_value = '' ) {
+	public static function remove_meta_if_default( $check, $object_id, $meta_key, $meta_value, $prev_value = '' ) {
 		/* If it's one of our meta fields, check against default */
 		if ( isset( self::$fields_index[ $meta_key ] ) && self::meta_value_is_default( $meta_key, $meta_value ) === true ) {
 			if ( $prev_value !== '' ) {
@@ -605,7 +613,7 @@ class WPSEO_Meta {
 			return true; // Stop saving the value.
 		}
 
-		return null; // Go on with the normal execution (update) in meta.php.
+		return $check; // Go on with the normal execution (update) in meta.php.
 	}
 
 
@@ -614,20 +622,20 @@ class WPSEO_Meta {
 	 *
 	 * @static
 	 *
-	 * @param  null   $null       Old, disregard.
+	 * @param  bool   $check      The current status to allow adding metadata for the given type.
 	 * @param  int    $object_id  ID of the current object for which the meta is being added.
 	 * @param  string $meta_key   The full meta key (including prefix).
 	 * @param  string $meta_value New meta value.
 	 *
 	 * @return null|bool          true = stop saving, null = continue saving
 	 */
-	public static function dont_save_meta_if_default( $null, $object_id, $meta_key, $meta_value ) {
+	public static function dont_save_meta_if_default( $check, $object_id, $meta_key, $meta_value ) {
 		/* If it's one of our meta fields, check against default */
 		if ( isset( self::$fields_index[ $meta_key ] ) && self::meta_value_is_default( $meta_key, $meta_value ) === true ) {
 			return true; // Stop saving the value.
 		}
 
-		return null; // Go on with the normal execution (add) in meta.php.
+		return $check; // Go on with the normal execution (add) in meta.php.
 	}
 
 
@@ -724,6 +732,19 @@ class WPSEO_Meta {
 		return update_post_meta( $post_id, self::$meta_prefix . $key, $meta_value );
 	}
 
+	/**
+	 * Deletes a meta value for a post
+	 *
+	 * @static
+	 *
+	 * @param string $key The internal key of the meta value to change (without prefix).
+	 * @param int    $post_id The ID of the post to change the meta for.
+	 *
+	 * @return bool Whether the value was changed
+	 */
+	public static function delete( $key, $post_id ) {
+		return delete_post_meta( $post_id, self::$meta_prefix . $key );
+	}
 
 	/**
 	 * Used for imports, this functions imports the value of $old_metakey into $new_metakey for those post
@@ -1010,6 +1031,7 @@ class WPSEO_Meta {
 	 *                     Will return empty string if key does not exists in $_POST
 	 */
 	public static function get_post_value( $key ) {
+		// @codingStandardsIgnoreLine
 		return ( array_key_exists( $key, $_POST ) ) ? $_POST[ $key ] : '';
 	}
 
@@ -1022,6 +1044,11 @@ class WPSEO_Meta {
 	 * @return array
 	 */
 	public static function keyword_usage( $keyword, $post_id ) {
+
+		if ( empty( $keyword ) ) {
+			return array();
+		}
+
 		$get_posts = new WP_Query(
 			array(
 				'meta_key'       => '_yoast_wpseo_focuskw',

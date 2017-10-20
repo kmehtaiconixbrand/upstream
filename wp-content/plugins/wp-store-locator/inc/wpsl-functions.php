@@ -5,30 +5,49 @@
  * we need before making a request to the Google Maps API.
  *
  * @since 1.0.0
- * @return string $api_params The api parameters
+ * @param  string  $api_key_type   The type of API key we need to include ( server_key or browser_key ).
+ * @param  boolean $geocode_params
+ * @return string  $api_params     The API parameters.
  */
-function wpsl_get_gmap_api_params( $geocode_params = false ) {
+function wpsl_get_gmap_api_params( $api_key_type, $geocode_params = false ) {
 
-    global $wpsl_settings;
+    global $wpsl, $wpsl_settings;
 
     $api_params = '';
-    $api_keys   = array( 'language', 'key', 'region' );
-
+    $param_keys = array( 'language', 'region', 'key' );
+    
     /*
      * The geocode params are included after the address so we need to 
      * use a '&' as the first char, but when the maps script is included on 
      * the front-end it does need to start with a '?'.
      */
-    $first_sep  = ( $geocode_params ) ? '&' : '?';
+    $first_sep = ( $geocode_params ) ? '&' : '?';
 
-    foreach ( $api_keys as $api_key ) {
-        if ( !empty( $wpsl_settings['api_'.$api_key] ) ) {
-            $api_params .= $api_key . '=' . $wpsl_settings['api_'.$api_key] . '&';
+    foreach ( $param_keys as $param_key ) {
+        $option_key = ( $param_key == 'key' ) ? $api_key_type : $param_key;
+        
+        /*
+         * Get the current language code if WPML or qTranslate-X is active. 
+         * Otherwise get the param value from the settings var.
+         */
+        if ( $option_key == 'language' && ( $wpsl->i18n->wpml_exists() || $wpsl->i18n->qtrans_exists() ) ) {
+            $param_val = $wpsl->i18n->check_multilingual_code();
+        } else {
+            $param_val = $wpsl_settings['api_' . $option_key];
+        }
+        
+        if ( !empty( $param_val ) ) {
+            $api_params .= $param_key . '=' . $param_val . '&';
         }
     }
 
     if ( $api_params ) {
         $api_params = $first_sep . rtrim( $api_params, '&' );
+    }
+    
+    // Do we need to include the autocomplete library?
+    if ( ( $wpsl_settings['autocomplete'] && $api_key_type == 'browser_key' ) || is_admin() ) {
+        $api_params .= '&libraries=places';
     }
 
     return apply_filters( 'wpsl_gmap_api_params', $api_params );
@@ -43,7 +62,8 @@ function wpsl_get_gmap_api_params( $geocode_params = false ) {
 function wpsl_get_default_settings() {
 
     $default_settings = array(
-        'api_key'                 => '',
+        'api_browser_key'         => '',
+        'api_server_key'          => '',
         'api_language'            => 'en',
         'api_region'              => '',
         'api_geocode_component'   => 0,
@@ -53,13 +73,17 @@ function wpsl_get_default_settings() {
         'marker_effect'           => 'bounce',
         'address_format'          => 'city_state_zip',
         'hide_distance'           => 0,
+        'hide_country'            => 0,
+        'show_contact_details'    => 0,
         'auto_locate'             => 1,
+        'autocomplete'            => 0,
         'autoload'                => 1,
         'autoload_limit'          => 50,
+        'run_fitbounds'           => 1,
         'zoom_level'              => 3,
         'auto_zoom_level'         => 15,
-        'zoom_name'               => '',
-        'zoom_latlng'             => '',
+        'start_name'              => '',
+        'start_latlng'            => '',
         'height'                  => 350,
         'map_type'                => 'roadmap',
         'map_style'               => '',
@@ -67,7 +91,8 @@ function wpsl_get_default_settings() {
         'streetview'              => 0,
         'results_dropdown'        => 1,
         'radius_dropdown'         => 1,
-        'category_dropdown'       => 0,
+        'category_filter'         => 0,
+        'category_filter_type'    => 'dropdown',
         'infowindow_width'        => 225,
         'search_width'            => 179,
         'label_width'             => 95,
@@ -102,6 +127,7 @@ function wpsl_get_default_settings() {
         'infowindow_style'        => 'default',
         'show_credits'            => 0,
         'debug'                   => 0,
+        'deregister_gmaps'        => 0,
         'start_label'             => __( 'Start location', 'wpsl' ),
         'search_label'            => __( 'Your location', 'wpsl' ),
         'search_btn_label'        => __( 'Search', 'wpsl' ),
@@ -122,7 +148,8 @@ function wpsl_get_default_settings() {
         'email_label'             => __( 'Email', 'wpsl' ),
         'url_label'               => __( 'Url', 'wpsl' ),
         'hours_label'             => __( 'Hours', 'wpsl' ),
-        'category_label'          => __( 'Category filter', 'wpsl' )
+        'category_label'          => __( 'Category filter', 'wpsl' ),
+        'category_default_label'  => __( 'Any', 'wpsl' )
     ); 
 
     return $default_settings;
@@ -381,7 +408,8 @@ function wpsl_labels() {
         'hours',
         'start',
         'limit',
-        'category'
+        'category',
+        'category_default'
     );
 
     return $labels;
@@ -416,13 +444,111 @@ function wpsl_is_multi_array( $array ) {
 
 /**
  * @since 2.1.1
- * @param string $address The address to geocode
+ * @param string $address  The address to geocode.
  * @return array $response Either a WP_Error or the response from the Geocode API.
  */
 function wpsl_call_geocode_api( $address ) {
 
-    $url      = 'https://maps.googleapis.com/maps/api/geocode/json?address=' . urlencode( $address ) . wpsl_get_gmap_api_params( true );
+    $url      = 'https://maps.googleapis.com/maps/api/geocode/json?address=' . urlencode( $address ) . wpsl_get_gmap_api_params( 'server_key', true );
     $response = wp_remote_get( $url );
-
+    
     return $response;
+}
+
+/**
+ * Get the latlng for the provided address.
+ * 
+ * This is used to geocode the address set as the start point on
+ * the settings page in case the autocomplete fails
+ * ( only happens when there is a JS error on the page ),
+ * or to get the latlng when the 'start_location' attr is set
+ * on the wpsl shortcode.
+ * 
+ * @since 2.2
+ * @param string      $address The address to geocode.
+ * @return array|void $latlng  The returned latlng or nothing if there was an error.
+ */
+function wpsl_get_address_latlng( $address ) {
+
+    $latlng   = '';
+    $response = wpsl_call_geocode_api( $address );
+
+    if ( !is_wp_error( $response ) ) {
+        $response = json_decode( $response['body'], true );
+
+        if ( $response['status'] == 'OK' ) {
+            $latlng = $response['results'][0]['geometry']['location']['lat'] . ',' . $response['results'][0]['geometry']['location']['lng'];    
+        }
+    }
+
+    return $latlng;
+}
+        
+/**
+ * Make sure the shortcode attributes are booleans 
+ * when they are expected to be.
+ *
+ * @since 2.0.4
+ * @param  array $atts Shortcode attributes
+ * @return array $atts Shortcode attributes
+ */
+function wpsl_bool_check( $atts ) {
+
+    foreach ( $atts as $key => $val ) {
+        if ( in_array( $val, array( 'true', '1', 'yes', 'on' ) ) ) {
+            $atts[$key] = true;
+        } else if ( in_array( $val, array( 'false', '0', 'no', 'off' ) ) ) {
+            $atts[$key] = false;
+        }
+    }
+
+    return $atts;
+}  
+
+/**
+ * Create a string with random characters.
+ * 
+ * @since 2.2.4
+ * @param  int    $length       Used length
+ * @return string $random_chars Random characters
+ */
+function wpsl_random_chars( $length = 5 ) {
+    
+    $random_chars = substr( str_shuffle( "abcdefghijklmnopqrstuvwxyz" ), 0, $length );
+
+    return $random_chars;
+}
+
+/**
+ * Deregister other Google Maps scripts.
+ * 
+ * If plugins / themes also include the Google Maps library, then it can cause
+ * problems with the autocomplete function on the settings page and break
+ * the store locator on the front-end.
+ * 
+ * @since 2.2.4
+ * @return void
+ */
+function wpsl_deregister_other_gmaps() {
+                
+    global $wp_scripts;
+
+    foreach ( $wp_scripts->registered as $index => $script ) {
+        if ( ( strpos( $script->src, 'maps.google.com' ) !== false ) || ( strpos( $script->src, 'maps.googleapis.com' ) !== false ) && ( $script->handle !== 'wpsl-gmap' ) ) { 
+            wp_deregister_script( $script->handle );
+        }
+    }
+}
+
+/**
+ * Return the used distance unit.
+ *
+ * @since 2.2.8
+ * @return string Either km or mi
+ */
+function wpsl_get_distance_unit() {
+
+    global $wpsl_settings;
+
+    return apply_filters( 'wpsl_distance_unit', $wpsl_settings['distance_unit'] );
 }

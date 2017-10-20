@@ -129,6 +129,7 @@
     width:340px;
 }
 
+#wpsl-api-region,
 #wpsl-wrap.wpsl-settings input[type=text].textinput {
     width:255px;
 }
@@ -344,10 +345,17 @@
     overflow: hidden;
 }
 
-.wpsl-store-meta label {
+.wpsl-store-meta label,
+.wpsl-store-meta legend {
     float: left;
     width: 95px;
     margin-top: 3px;
+}
+
+.wpsl-store-meta fieldset label {
+    display: inline-block;
+    line-height: 1.4em;
+    margin: 0.25em 0 0.5em !important;
 }
 
 .wpsl-store-meta textarea,
@@ -587,7 +595,7 @@ div.wpsl-active {
     content: '\e803'; 
 }
 
-.wpsl-icon-plus-circled:before { 
+.wpsl-icon-plus-circled:before {
     content: '\e805'; 
 }
 
@@ -602,4 +610,48 @@ div.wpsl-active {
 #wpsl-store-hours .wpsl-icon-plus-circled:hover,
 #wpsl-store-hours .wpsl-icon-cancel-circled:hover {
     color: #444;
+}
+
+.wpsl-add-on {
+    float: left;
+    position: relative;
+    width: 300px;
+    height: 240px;
+    background: #fff;
+    margin: 20px 20px 0 0;
+    border: 1px solid #e8e8e8;
+    border-radius: 3px;
+}
+
+.wpsl-add-on p {
+    margin-top: 0;
+}
+
+.wpsl-add-on img {
+    height: auto;
+    max-width: 100%;
+    vertical-align: bottom;
+}
+
+.wpsl-add-on > a {
+    width: 300px;
+    display: inline-block;
+}
+
+.wpsl-add-on a img:hover {
+    opacity: 0.95;
+}
+
+.wpsl-add-on .wpsl-add-on-desc {
+    padding: 20px;    
+}
+
+.wpsl-add-on-status {
+    position: absolute;
+    left: 20px;
+    bottom: 20px;
+}
+
+.wpsl-add-on-status p {
+    margin: 0 0 4px 0;
 }

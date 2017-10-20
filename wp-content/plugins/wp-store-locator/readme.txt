@@ -4,8 +4,8 @@ Contributors: tijmensmit
 Donate link: https://www.paypal.me/tijmensmit
 Tags: google maps, store locator, business locations, geocoding, stores, geo, zipcode locator, dealer locater, geocode, gmaps, google map, google map plugin, location finder, map tools, shop locator, wp google map
 Requires at least: 3.7
-Tested up to: 4.4.1
-Stable tag: 2.1.2
+Tested up to: 4.7
+Stable tag: 2.2.9
 License: GPLv3
 License URI: http://www.gnu.org/licenses/gpl.html
 
@@ -38,9 +38,8 @@ the language that is set in the admin panel.
 * Use the Geolocation API to find the current location of the user and show nearby stores.
 * Developer friendly code. It uses custom post types and includes almost 30 different [filters](https://wpstorelocator.co/documentation/filters/) that help you change the look and feel of the store locator.
 
-= Documentation =
-
-Please take a look at the store locator [documentation](https://wpstorelocator.co/documentation/) before making a support request.
+> <strong>Documentation</strong><br>
+> Please take a look at the store locator [documentation](https://wpstorelocator.co/documentation/) before making a support request.
 
 * [Getting Started](https://wpstorelocator.co/documentation/getting-started/)
 * [Troubleshooting](https://wpstorelocator.co/documentation/troubleshooting/)
@@ -57,9 +56,9 @@ The [CSV Manager](https://wpstorelocator.co/add-ons/csv-manager/) allows you to 
 
 The [Search Widget](https://wpstorelocator.co/add-ons/search-widget/) enables users to search from any of the widgetized areas in your theme for nearby store locations, and show the results on the store locator page.
 
-**Statistics - Coming Soon**
+**Statistics**
 
-Keep track where users are searching, and see where there is demand for a possible store. 
+The [Statistics](https://wpstorelocator.co/add-ons/statistics/) add-on enables you to keep track of the locations users are searching for and see where there is demand for a new store.
 
 **Store Directory  - Coming Soon**
 
@@ -69,6 +68,8 @@ Generate a directory based on the store locations.
 
 1. Upload the `wp-store-locator` folder to the `/wp-content/plugins/` directory
 1. Activate the plugin through the 'Plugins' menu in WordPress
+1. Create a [Google API Key](https://wpstorelocator.co/document/create-google-api-keys/) and set them on the [settings](https://wpstorelocator.co/document/configure-wp-store-locator/#google-maps-api) page.
+1. Set the start point on the [settings](https://wpstorelocator.co/document/configure-wp-store-locator/#map).
 1. Add your stores under 'Store Locator' -> Add Store
 1. Add the map to a page with this shortcode: [wpsl]
 
@@ -76,7 +77,19 @@ Generate a directory based on the store locations.
 
 = How do I add the store locator to a page? =
 
-Add this shortcode [wpsl] to the page where you want to display the store locator.
+Add this [shortcode](https://wpstorelocator.co/document/shortcodes/) [wpsl] to the page where you want to display the store locator.
+
+= Oops! Something went wrong =
+
+You can fix this by setting the [browser](https://wpstorelocator.co/document/configure-wp-store-locator/#google-maps-api) key on the settings page.
+
+= There are weird characters in the search results, how do I remove them? =
+
+This is most likely caused by a plugin like W3 Total Cache that tried to minify the HTML output on the store locator page. You can fix this by excluding the store locator from being minified on the settings page of the caching plugin you're using. In W3 Total Cache this is done by going to Minify -> Advanced -> Never minify the following pages, and fill in the page you don't want to have minified. So if your store locator is used on mydomain.com/store-locator, then fill in 'store-locator'.
+
+= Can I use different markers for each category? =
+
+Unfortunately not at the moment, but this will be possible in the future.
 
 = The map doesn't display properly. It's either broken in half or doesn't load at all. =
 
@@ -113,6 +126,101 @@ If you find a plugin or theme that causes a conflict, please report it on the [s
 
 == Changelog ==
 
+= 2.2.9, July 9, 2017 =
+* Added: The possibility to load [custom images](https://wpstorelocator.co/document/change-marker-cluster-images/) for the marker clusters.
+* Added: An option to the map section to disable the zoom level from being automatically adjusted after a search is complete. If it's disabled then it will focus on the start point, and use the zoom level from the 'Initial zoom level' field.
+* Added: A check that prevents the search radius / max results value used in the SQL query from being bigger then the max value set on the settings page.
+* Fixed: The get_default_filter_value func not returning the default value for the search radius field ( see next item ).
+* Changed: Had to rename the param for the search radius in the AJAX call from radius to search_radius to make it match with the settings page value.
+* Note: If you're using custom code that relies on the returned paramater being radius, then rename it to search_radius.
+* Changed: Updated the .pot file.
+
+= 2.2.8, April 30, 2017 =
+* Added: Support for [Polylang](https://wordpress.org/plugins/polylang/).
+* Added: A [wpsl_direction_travel_mode](https://wpstorelocator.co/document/wpsl_direction_travel_mode/) filter that enabled you to change the used [travel mode](https://developers.google.com/maps/documentation/javascript/directions#TravelModes) for the directions.
+* Added: A [wpsl_distance_unit](https://wpstorelocator.co/document/wpsl_distance_unit/) filter.
+* Added: A [wpsl_disable_welcome_pointer](https://wpstorelocator.co/document/wpsl_disable_welcome_pointer/) filter that enables you disable the newsletter signup on a multisite network.
+* Added: Support for custom alternateMarkerUrl and categoryMarkerUrl data in the JS file, this allows you to set a custom marker for [individual locations](https://wpstorelocator.co/document/use-different-marker-for-each-location/) and for [categories](https://wpstorelocator.co/document/set-unique-category-markers/).
+* Changed: Deprecated the [wpsl_draggable_map](https://wpstorelocator.co/document/wpsl_draggable_map/) filter and [replaced](https://wpstorelocator.co/document/wpsl_gesture_handling/) it with support for Google Maps [gestureHandling](https://developers.google.com/maps/documentation/javascript/interaction).
+* Changed: Made sure the supported map regions on the settings page match with the list of supported regions from [Google](https://developers.google.com/maps/coverage).
+* Changed: Included the latest version of the EDD_SL_Plugin_Updater class ( 1.6.12 ).
+* Fixed: A fatal call to undefined function error when the plugin is activated through WP-CLI.
+* Fixed: The controls in street view mode not having a background color, so the back button wasn't visible.
+* Fixed: Prevented two consecutive underscores from showing up in the generated transient names if no autoload limit is set.
+
+= 2.2.7, December 31, 2016 =
+* Changed: Included the latest version of the EDD_SL_Plugin_Updater class ( 1.6.8 ).
+* Changed: Reverted a change in the CSS file that ended up breaking the map for some users.
+
+= 2.2.6, December 24, 2016 =
+* Fixed: The opening hours not working correctly for Saturday / Sunday in the admin area. The 12:00 AM field was missing.
+* Fixed: A PHP notice showing up when an invalid value was set for the radius / max results dropdown.
+* Fixed: The zoom attribute now works correctly for the wpsl_map shortcode.
+* Changed: Included the latest version of the EDD_SL_Plugin_Updater class ( 1.6.7 ).
+* Changed: Removed unused locationCount var from wpsl-gmap.js.
+* Changed: Added a CSS rule that makes it harder for themes to scaled images on the map.
+
+= 2.2.5, December 11, 2016 =
+* Fixed: Made it work with the latest WPML version.
+* Fixed: Remove the WPSL caps and Store Locator Manager role on uninstall. The code was always there to do so, but was never called.
+* Fixed: A PHP notice that showed up when the settings page was saved with an empty start location field.
+* Changed: Adjusted the structure of the post type labels so you can correctly translate them in singular / plural forms based on the used language. Via [deshack](https://wordpress.org/support/users/deshack/).
+* Changed: Added a tooltip to the 'Attempt to auto-locate the user' field explaining that HTTPS is now [required](https://wpstorelocator.co/document/html-5-geolocation-not-working-chrome-safari/) in Chrome and Safari.
+* Changed: The coordinates from the start location are now used to center the map in the map section on the settings page instead of it always defaulting to Holland.
+* Changed: Renamed the existing option that prevents two Google Maps libraries from loading at the same time to "Enable compatibility mode" on the settings page ( Tools section ).
+* Changed: Updated the wpsl.pot file.
+* Changed: No longer use the deprecated icl_object_id() function when the WPML version is newer then 3.2.
+
+= 2.2.4, Augustus 6, 2016 =
+* New: Added an option to the tools section to prevent other scripts from including the Google Maps API a second time on the store locator page. This sometimes breaks the map.
+* Fixed: Assigned the correct country code to Martinique on the settings page.
+* Fixed: The code that calls [wp_editor](https://codex.wordpress.org/Function_Reference/wp_editor) now includes a random ID after 'wpsleditor' to make sure you can use it multiple times on the same page.
+* Fixed: The inline [qTranslate X](https://wordpress.org/plugins/qtranslate-x/) syntax ( [:en]English Text[:de]Deutsch[:] ) now works for the label fields.
+* Fixed: Added a workaround for [this](https://bugzilla.mozilla.org/show_bug.cgi?id=1283563) bug with the Geolocation API in Firefox.
+* Changed: Automatically adjust the language Google Maps uses when WMPL or qTranslate X is active.
+* Changed: Improved the handling of error codes returned by the Google Geocode API.
+* Changed: Removed the '_' prefix from the returned language code in check_multilingual_code().
+* Changed: Updated the wpsl.pot file.
+
+= 2.2.3, June 27, 2016 =
+* Fixed: Included the browser key in requests made to the Google Maps JavaScript API in the admin area. This is now [required](http://googlegeodevelopers.blogspot.nl/2016/06/building-for-scale-updates-to-google.html).
+* Changed: Include the language code in the AJAX request if WPML is active.
+* New: Spanish translations (es_ES). Via [Jaime Smeke](http://untaljai.me/).
+* New: Added support for the upcoming statistics add-on.
+
+= 2.2.2, May 18, 2016 =
+* Fixed: Corrected the [path](https://github.com/googlemaps/js-marker-clusterer/pull/61) for the cluster marker images.
+
+= 2.2.1, March 24, 2016 =
+* Fixed: A JS bug that sometimes resulted in duplicate results showing up in the search results.
+
+= 2.2, March 20, 2016 =
+* New: The option to show the categories with checkboxes instead of a dropdown.
+* Note: If you're showing the categories with checkboxes, then you can change the amount of used columns by setting the "checkbox_columns" ( between 1 and 4 ) on the [wpsl] shortcode.
+* New: A [wpsl_no_results](https://wpstorelocator.co/document/wpsl_no_results) filter that allows you to create a custom HTML block that replaces the 'No results found' text.
+* New: The option to enable [autocomplete](https://developers.google.com/maps/documentation/javascript/examples/places-autocomplete) for location searches.
+* Note: Read [this](https://wpstorelocator.co/version-2-2-released/#autocomplete) if you're using a custom template and want to use the autocomplete option.
+* New: A [wpsl_enable_styled_dropdowns](https://wpstorelocator.co/document/wpsl_enable_styled_dropdowns/) filter that allows you to disable the current JS styling for all the dropdowns.
+* New: You can now change the "Any" text used in the category dropdown in the labels section on the settings page.
+* New: The option to hide the country name in the search results / marker pop-up.
+* New: The option to show the contact details below the address.
+* New: A [wpsl_hide_closed_hours](https://wpstorelocator.co/document/wpsl_hide_closed_hours/) filter that enables you to hide the days that the location is closed from the opening hours list.
+* New: Values from [custom dropdowns](https://wpstorelocator.co/version-2-2-released/#custom-dropdown) that have a "wpsl-custom-dropdown" class set are automatically included in the AJAX data.
+* New: Added a Add-Ons page to the "Store Locator" menu.
+* New: A [wpsl_map_tab_anchor_return](https://wpstorelocator.co/document/wpsl_map_tab_anchor_return/) filter that allows you to choose between return true or false if the tab anchor is clicked.
+* New: Added the "aria-required" attribute to the search field.
+* Changed: The category dropdown is now created with [wp_dropdown_categories](https://codex.wordpress.org/Function_Reference/wp_dropdown_categories) and correctly indents sub categories.
+* Changed: If a search returns no results, then the map will now focus on the searched location instead of only showing the "No results found" msg. 
+* Changed: Instead of a single "API key" [field](https://wpstorelocator.co/document/configure-wp-store-locator/#google-maps-api) there are now separate [server](https://developers.google.com/maps/documentation/geocoding/get-api-key#get-an-api-key) and [browser](https://developers.google.com/maps/documentation/javascript/get-api-key#get-an-api-key) key fields. If an API key existed, then it's assumed to be a server key.
+* Changed: A scrollbar is shown inside the styled dropdown filters if they are heigher then 300px. You can change the maximum height with the [wpsl_max_dropdown_height](https://wpstorelocator.co/document/wpsl_max_dropdown_height/) filter.
+* Changed: Removed the text wrap on the category filter items. If a category name is too long, then it will now go over two lines instead of being cut off.
+* Changed: Updated the wpml-config.xml and wpsl.pot.
+* Changed: If the autocomplete for the start location on the settings page fails ( JS error ), then the set start location is geocoded in the background when the settings are saved.
+* Changed: A single JS function now handles all the conditional options on the settings page instead of several smaller ones.
+* Changed: The "zoom_name" and "zoom_latlng" setting is renamed to "start_name" and "start_latlng".
+* Changed: Renamed the "category_dropdown" setting to "category_filter" to better reflect the value that it holds ( either checkbox or dropdown ). So if you're using a custom template, then make sure to change "category_dropdown" to "category_filter" in your code.
+* Fixed: If you click on one of the styled dropdowns when it's already open, then it will now close.
+
 = 2.1.2, March 4, 2016 =
 * Fixed: Invalid HTML in the category dropdown.
 * Fixed: Clicking on the marker on a single store / [wpsl_map] page triggered a JS error if the location permalinks are enabled.
@@ -120,20 +228,20 @@ If you find a plugin or theme that causes a conflict, please report it on the [s
 * Fixed: Compatibility [issue](https://make.wordpress.org/core/2016/02/17/backbone-and-underscore-updated-to-latest-versions/) with Underscore 1.8.3.
 
 = 2.1.1, January 13, 2016 =
-* Added: Restrict the search results to one or more categories by using the "category" attribute on the [wpsl] [shortcode](https://wpstorelocator.co/document/shortcodes/#store-locator).
-* Added: A "start_location" attribute for the [wpsl] [shortcode](https://wpstorelocator.co/document/shortcodes/#store-locator).
-* Added: Included a link to the add-ons page in the plugin meta row.
-* Added: Support for the "wp_editor" type with the [wpsl_meta_box_fields](https://wpstorelocator.co/document/wpsl_meta_box_fields/) filter, this will render the default WP Editor. Via [Richard](http://ampersandstudio.uk/).
+* New: Restrict the search results to one or more categories by using the "category" attribute on the [wpsl] [shortcode](https://wpstorelocator.co/document/shortcodes/#store-locator).
+* New: A "start_location" attribute for the [wpsl] [shortcode](https://wpstorelocator.co/document/shortcodes/#store-locator).
+* New: Included a link to the add-ons page in the plugin meta row.
+* New: Support for the "wp_editor" type with the [wpsl_meta_box_fields](https://wpstorelocator.co/document/wpsl_meta_box_fields/) filter, this will render the default WP Editor. Via [Richard](http://ampersandstudio.uk/).
 * Changed: Moved the documentation link from the plugin actions row to the plugin meta row.
 * Changed: If you use the "category" attribute on the [wpsl_map] shortcode, then the store names in the marker info window will automatically link to the store page or custom url.
 
 = 2.1.0, December 23, 2015 =
-* Added: You can now use the "category" attribute ( use the category slugs as values ) on the [wpsl_map] shortcode to show locations that belong to one or more categories.
-* Added: Support to load the marker images from a [different folder](https://wpstorelocator.co/document/use-custom-markers/).
-* Added: A [wpsl_marker_props](https://wpstorelocator.co/document/wpsl_marker_props) filter that enables you to change the default "anchor", "scaledSize" and "origin" for the [marker image](https://developers.google.com/maps/documentation/javascript/3.exp/reference#Icon).
-* Added: A [wpsl_geocode_components](https://wpstorelocator.co/document/wpsl_geocode_components) filter that enables you to restrict the returned geocode results by administrativeArea, country, locality, postalCode and route.
-* Added: A [wpsl_draggable](https://wpstorelocator.co/document/wpsl_draggable_map) filter that enables you to enable/disable the dragging of the map.
-* Added: Support for the upcoming add-ons.
+* New: You can now use the "category" attribute ( use the category slugs as values ) on the [wpsl_map] shortcode to show locations that belong to one or more categories.
+* New: Support to load the marker images from a [different folder](https://wpstorelocator.co/document/use-custom-markers/).
+* New: A [wpsl_marker_props](https://wpstorelocator.co/document/wpsl_marker_props) filter that enables you to change the default "anchor", "scaledSize" and "origin" for the [marker image](https://developers.google.com/maps/documentation/javascript/3.exp/reference#Icon).
+* New: A [wpsl_geocode_components](https://wpstorelocator.co/document/wpsl_geocode_components) filter that enables you to restrict the returned geocode results by administrativeArea, country, locality, postalCode and route.
+* New: A [wpsl_draggable](https://wpstorelocator.co/document/wpsl_draggable_map) filter that enables you to enable/disable the dragging of the map.
+* New: Support for the upcoming add-ons.
 * Note: Read [this](https://wpstorelocator.co/version-2-1-released/#widget-support) if you're using a custom template!
 * Changed: If you need to geocode the full address ( new store ), and a value for 'state' is provided it's now included in the geocode request.
 * Changed: If the Geocode API returns a REQUEST_DENIED status, then the returned error message is shown explaining why it failed. 
