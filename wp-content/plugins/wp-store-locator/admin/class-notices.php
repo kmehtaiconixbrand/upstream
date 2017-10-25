@@ -30,7 +30,7 @@ if ( !class_exists( 'WPSL_Notices' ) ) {
             
             add_action( 'all_admin_notices', array( $this, 'show' ) );
         }
-
+        
         /**
          * Show one or more notices.
          * 

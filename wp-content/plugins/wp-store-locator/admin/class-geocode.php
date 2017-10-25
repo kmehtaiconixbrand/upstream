@@ -128,11 +128,9 @@ if ( !class_exists( 'WPSL_Geocode' ) ) {
             
             $address  = $this->create_geocode_address( $store_data );
             $response = wpsl_call_geocode_api( $address );
-
+            
             if ( is_wp_error( $response ) ) {
                 $geo_response = sprintf( __( 'Something went wrong connecting to the Google Geocode API: %s %s Please try again later.', 'wpsl' ), $response->get_error_message(), '<br><br>' );
-            } else if ( $response['response']['code'] != 200 ) {
-                $geo_response = sprintf( __( 'The Google Geocode API reported the following problem: error %s %s %s Please contact %ssupport%s if the problem persists.', 'wpsl' ), $response['response']['code'], $response['response']['message'], '<br><br>', '<a href="https://wpstorelocator.co/support/">', '</a>' );                
             } else {
                 $geo_response = json_decode( $response['body'], true ); 
             }
@@ -157,7 +155,7 @@ if ( !class_exists( 'WPSL_Geocode' ) ) {
                     $address[] = trim( $store_data[$address_part] );
                 }
             }
-
+            
             $geocode_address = implode( ',', $address );
 
             return $geocode_address;

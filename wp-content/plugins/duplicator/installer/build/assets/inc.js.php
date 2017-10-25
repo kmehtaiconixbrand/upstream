@@ -1,22 +1,28 @@
-<script>
-	//Unique namespace
-    DUPX = new Object();
+<?php
+	// Exit if accessed directly
+	if (! defined('DUPLICATOR_INIT')) {
+		$_baseURL =  strlen($_SERVER['SERVER_NAME']) ? $_SERVER['SERVER_NAME'] : $_SERVER['HTTP_HOST'];
+		$_baseURL =  "http://" . $_baseURL;
+		header("HTTP/1.1 301 Moved Permanently");
+		header("Location: $_baseURL");
+		exit; 
+	}
+?>
 
-	DUPX.showProgressBar = function ()
-    {
-		DUPX.animateProgressBar('progress-bar');
+<script type="text/javascript">
+	//Unique namespace
+	Duplicator = new Object();
+
+	Duplicator.showProgressBar = function () {
+		Duplicator.animateProgressBar('progress-bar');
 		$('#ajaxerr-area').hide();
 		$('#progress-area').show();
 	}
-
-	DUPX.hideProgressBar = function ()
-    {
+	Duplicator.hideProgressBar = function () {
 		$('#progress-area').hide(100);
 		$('#ajaxerr-area').fadeIn(400);
 	}
-
-	DUPX.animateProgressBar = function(id)
-    {
+	Duplicator.animateProgressBar = function(id) {
 		//Create Progress Bar
 		var $mainbar   = $("#" + id);
 		$mainbar.progressbar({ value: 100 });
@@ -30,48 +36,31 @@
 		}
 	}
 
-    DUPX.toggleAll = function(id)
-    {
-		$(id + " *[data-type='toggle']").each(function() {
-			$(this).trigger('click');
-		});
-	}
-
-
-    DUPX.toggleClick = function()
-    {
-		var id     = $(this).attr('data-target');
-		var text   = $(this).text().replace(/\+|\-/, "");
-		var icon   = $(this).find('i.dupx-plus-square, i.dupx-minus-square');
-		var target = $(id);
-		$(icon).removeClass('dupx-plus-square dupx-minus-square');
-
-		if (target.is(':hidden') ) {
-			(icon.length)
-				? $(icon).addClass('dupx-minus-square')
-				: $(this).html("- " + text );
-			target.show();
-		} else {
-			(icon.length)
-				? $(icon).addClass('dupx-plus-square')
-				: $(this).html("+ " + text );
-			target.hide();
-		}
-	}
 	
-	$(document).ready(function()
-    {
-		<?php if ($GLOBALS['DUPX_DEBUG']) : ?>
-			$("div.dupx-debug input[type=hidden], div.dupx-debug textarea").each(function() {
-				var label = '<label>' + $(this).attr('name') + ':</label>';
-				$(this).before(label);
-				$(this).after('<br/>');
-			 });
-			 $("div.dupx-debug input[type=hidden]").each(function() {
-				$(this).attr('type', 'text');
-			 });
-
-			 $("div.dupx-debug").prepend('<h2>Debug View</h2>');
-		<?php endif; ?>
+	Duplicator.toggleMetaBox = function() {
+		var $title = jQuery(this);
+		var $panel = $title.parent().find('.dup-box-panel');
+		var $arrow = $title.parent().find('.dup-box-arrow');
+		var value = $panel.is(":visible") ? 0 : 1;
+		$panel.toggle();
+		(value) ? $arrow.html('-') : $arrow.html('+');
+	}	
+	
+	$(document).ready(function() {
+		//ATTACHED EVENTS
+		$('#dup-hlp-lnk').change(function() {
+			if ($(this).val() != "null") 
+				window.open($(this).val())
+		});
+		
+		//Init: Toggle MetaBoxes
+		$('div.dup-box div.dup-box-title').each(function() { 
+			var $title = $(this);
+			var $panel = $title.parent().find('.dup-box-panel');
+			var $arrow = $title.find('.dup-box-arrow');
+			$title.click(Duplicator.toggleMetaBox); 
+			($panel.is(":visible")) ? $arrow.html('-') : $arrow.html('+');
+		});
+		
 	});
 </script>

@@ -184,13 +184,17 @@ function MarkerClusterer(map, opt_markers, opt_options) {
   }
 }
 
+
 /**
  * The marker cluster image path.
  *
  * @type {string}
  * @private
  */
-MarkerClusterer.prototype.MARKER_CLUSTER_IMAGE_PATH_ = wpslSettings.clusterImagePath;
+MarkerClusterer.prototype.MARKER_CLUSTER_IMAGE_PATH_ =
+    '//google-maps-utility-library-v3.googlecode.com/svn/trunk/markerclusterer/' +
+    'images/m';
+
 
 /**
  * The marker cluster image path.
@@ -199,6 +203,7 @@ MarkerClusterer.prototype.MARKER_CLUSTER_IMAGE_PATH_ = wpslSettings.clusterImage
  * @private
  */
 MarkerClusterer.prototype.MARKER_CLUSTER_IMAGE_EXTENSION_ = 'png';
+
 
 /**
  * Extends a objects prototype by anothers.
@@ -216,6 +221,7 @@ MarkerClusterer.prototype.extend = function(obj1, obj2) {
     return this;
   }).apply(obj1, [obj2]);
 };
+
 
 /**
  * Implementaion of the interface method.

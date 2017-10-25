@@ -40,12 +40,10 @@
 /* 
 Some themes set a box-shadow or max-width for all image / 
 div elements, we disable it to prevent it from messing up the map
-
-The .gv-iv- class is used in streetview, and they should not be included.
 */
-#wpsl-gmap div:not[class^="gv-iv"],
+#wpsl-gmap div, 
 #wpsl-gmap img,
-.wpsl-gmap-canvas div:not[class^="gv-iv"],
+.wpsl-gmap-canvas div, 
 .wpsl-gmap-canvas img {
     box-shadow: none !important;
     max-width: none !important;
@@ -59,23 +57,7 @@ The .gv-iv- class is used in streetview, and they should not be included.
     max-height: none !important;
 }
 
-/*
-Fix a problem where the background color used
-in street view mode doesn't cover the control area.
-*/
-#wpsl-gmap * {
-    box-sizing: content-box !important;
-    -webkit-box-sizing: content-box !important;
-    -moz-box-sizing: content-box !important;
-}
-
-#wpsl-gmap div.gm-iv-marker,
-.wpsl-gmap-canvas div.gm-iv-marker {
-    backgroud-image: inherit;
-}
-
 #wpsl-wrap {
-    position: relative;
     width: 100%;
     overflow: hidden;
     clear: both;
@@ -85,13 +67,6 @@ in street view mode doesn't cover the control area.
 #wpsl-search-wrap {
     float: left;
     width: 100%;
-}
-
-#wpsl-search-wrap form {
-    margin: 0;
-    padding: 0;
-    border: none;
-    outline: none;
 }
 
 /* Map Controls */
@@ -276,10 +251,6 @@ in street view mode doesn't cover the control area.
     margin-bottom:12px;
     padding:12px 12px 0 12px;
     background:#f4f3f3;
-}
-
-.wpsl-search.wpsl-checkboxes-enabled {
-    padding: 12px;
 }
 
 /* Result list */
@@ -620,15 +591,9 @@ in street view mode doesn't cover the control area.
 .wpsl-dropdown li {
     position: relative;
     display: block;
-    line-height: normal;
+    line-height: 1;
     color: #000;
     overflow: hidden;
-}
-
-#wpsl-radius .wpsl-dropdown .wpsl-selected-item,
-#wpsl-radius .wpsl-dropdown li,
-#wpsl-results .wpsl-dropdown .wpsl-selected-item,
-#wpsl-results .wpsl-dropdown li {
     white-space: nowrap;
 }
 
@@ -687,14 +652,6 @@ in street view mode doesn't cover the control area.
 .wpsl-select-wrap {
     position: relative;
     margin-bottom: 10px;
-}
-
-#wpsl-search-wrap .wpsl-scroll-required div {
-    overflow-y: scroll;
-}
-
-.wpsl-scroll-required ul {
-    overflow: visible;
 }
 
 .wpsl-provided-by {
@@ -769,54 +726,9 @@ table.wpsl-opening-hours td {
 .wpsl-gmap-canvas .wpsl-infobox:before {
     border-left:13px solid transparent;
     border-right:13px solid transparent;
-    border-top:13px solid #ccc;
+    border-top:13px solid #ccc;	
     bottom:-13px;
     left:38px;
-}
-
-#wpsl-checkbox-filter,
-.wpsl-custom-checkboxes {
-    display: block;
-    float: left;
-    margin: 5px 0 15px;
-    padding: 0;
-    width: 100%;
-}
-
-#wpsl-checkbox-filter li,
-.wpsl-custom-checkboxes li {
-    float: left;
-    list-style: none;
-    margin: 0 1% 0 0;
-}
-
-#wpsl-checkbox-filter.wpsl-checkbox-1-columns li,
-.wpsl-custom-checkboxes.wpsl-checkbox-1-columns li {
-    width: 99%;    
-}
-
-#wpsl-checkbox-filter.wpsl-checkbox-2-columns li,
-.wpsl-custom-checkboxes.wpsl-checkbox-2-columns li {
-    width: 49%;    
-}
-
-#wpsl-checkbox-filter.wpsl-checkbox-3-columns li,
-.wpsl-custom-checkboxes.wpsl-checkbox-3-columns li {
-    width: 32%;    
-}
-
-#wpsl-checkbox-filter.wpsl-checkbox-4-columns li,
-.wpsl-custom-checkboxes.wpsl-checkbox-4-columns li {
-    width: 24%;    
-}
-
-#wpsl-checkbox-filter input,
-.wpsl-custom-checkboxes input {
-    margin-right: 5px;
-}
-
-#wpsl-result-list .wpsl-contact-details span {
-    display: block !important;
 }
 
 @media (max-width: 825px) {
@@ -909,28 +821,23 @@ table.wpsl-opening-hours td {
     #wpsl-stores.wpsl-not-loaded {
         height: 25px;
     }
-
+    
     #wpsl-reset-map {
         top: 25px;
     }
-
+    
     #wpsl-gmap {
         margin-top: 10px;
     } 
-
+    
     .wpsl-no-filters #wpsl-search-wrap .wpsl-input,
     #wpsl-category, .wpsl-input, .wpsl-select-wrap,
     .wpsl-input, #wpsl-search-btn {
         margin-bottom: 0;
     }
-
+    
     #wpsl-stores.wpsl-no-autoload {
         height: auto !important;
-    }
-
-    #wpsl-checkbox-filter.wpsl-checkbox-3-columns li,
-    #wpsl-checkbox-filter.wpsl-checkbox-4-columns li {
-        width: 49%;    
     }
 }
 
@@ -956,10 +863,6 @@ table.wpsl-opening-hours td {
     
     .wpsl-search-btn-wrap {
         margin-top: 15px;
-    }
-    
-    .wpsl-checkboxes-enabled .wpsl-search-btn-wrap {
-        margin-top: 0;
     }
     
     #wpsl-search-wrap div, 
@@ -1001,17 +904,4 @@ table.wpsl-opening-hours td {
     .wpsl-no-filters #wpsl-search-input {
         width: 100% !important;
     }
-}
-
-@media (max-width: 420px) {
-    #wpsl-checkbox-filter li {
-        margin: 0;
-    }
-    
-    #wpsl-checkbox-filter.wpsl-checkbox-1-columns li,
-    #wpsl-checkbox-filter.wpsl-checkbox-2-columns li,
-    #wpsl-checkbox-filter.wpsl-checkbox-3-columns li,
-    #wpsl-checkbox-filter.wpsl-checkbox-4-columns li {
-        width: 100%;    
-    }    
 }

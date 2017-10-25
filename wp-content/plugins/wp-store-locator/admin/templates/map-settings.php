@@ -1,4 +1,4 @@
-<?php
+<?php 
 if ( !defined( 'ABSPATH' ) ) exit;
 
 global $wpdb, $wpsl, $wpsl_admin, $wp_version, $wpsl_settings;
@@ -81,6 +81,7 @@ global $wpdb, $wpsl, $wpsl_admin, $wp_version, $wpsl_settings;
         </form>
     <?php
     } else {
+        //@todo add server / browser key fields for the Geocode API.
     ?>
     
     <div id="general">
@@ -91,12 +92,8 @@ global $wpdb, $wpsl, $wpsl_admin, $wp_version, $wpsl_settings;
                         <h3 class="hndle"><span><?php _e( 'Google Maps API', 'wpsl' ); ?></span></h3>
                         <div class="inside">
                             <p>
-                                <label for="wpsl-api-server-key"><?php _e( 'Server key', 'wpsl' ); ?>:<span class="wpsl-info"><span class="wpsl-info-text wpsl-hide"><?php echo sprintf( __( 'A %sserver key%s allows you to monitor the usage of the Google Maps %sGeocoding API%s. %s %sRequired%s for %sapplications%s created after June 22, 2016.', 'wpsl' ), '<a href="https://wpstorelocator.co/document/create-google-api-keys/#server-key" target="_blank">', '</a>', '<a href="https://developers.google.com/maps/documentation/geocoding/intro">', '</a>', '<br><br>', '<strong>', '</strong>', '<a href="https://googlegeodevelopers.blogspot.nl/2016/06/building-for-scale-updates-to-google.html">', '</a>' ); ?></span></span></label> 
-                                <input type="text" value="<?php echo esc_attr( $wpsl_settings['api_server_key'] ); ?>" name="wpsl_api[server_key]"  class="textinput" id="wpsl-api-server-key">
-                            </p>
-                            <p>
-                                <label for="wpsl-api-browser-key"><?php _e( 'Browser key', 'wpsl' ); ?>:<span class="wpsl-info"><span class="wpsl-info-text wpsl-hide"><?php echo sprintf( __( 'A %sbrowser key%s allows you to monitor the usage of the Google Maps %sJavaScript API%s. %s %sRequired%s for %sapplications%s created after June 22, 2016.', 'wpsl' ), '<a href="https://wpstorelocator.co/document/create-google-api-keys/#browser-key" target="_blank">', '</a>', '<a href="https://developers.google.com/maps/documentation/javascript/">', '</a>', '<br><br>', '<strong>', '</strong>', '<a href="https://googlegeodevelopers.blogspot.nl/2016/06/building-for-scale-updates-to-google.html">', '</a>' ); ?></span></span></label> 
-                                <input type="text" value="<?php echo esc_attr( $wpsl_settings['api_browser_key'] ); ?>" name="wpsl_api[browser_key]" class="textinput" id="wpsl-api-browser-key">
+                                <label for="wpsl-api-key"><?php _e( 'API key', 'wpsl' ); ?>:<span class="wpsl-info"><span class="wpsl-info-text wpsl-hide"><?php echo sprintf( __( 'A valid %sAPI key%s allows you to monitor the API usage and is required if you need to purchase additional quota.', 'wpsl' ), '<a href="https://developers.google.com/maps/documentation/javascript/tutorial#api_key" target="_blank">', '</a>' ); ?></span></span></label> 
+                                <input type="text" value="<?php echo esc_attr( $wpsl_settings['api_key'] ); ?>" name="wpsl_api[key]" placeholder="<?php _e( 'Optional', 'wpsl' ); ?>" class="textinput" id="wpsl-api-key">
                             </p>
                             <p>
                                 <label for="wpsl-api-language"><?php _e( 'Map language', 'wpsl' ); ?>:<span class="wpsl-info"><span class="wpsl-info-text wpsl-hide"><?php _e( 'If no map language is selected the browser\'s prefered language is used.', 'wpsl' ); ?></span></span></label> 
@@ -128,29 +125,19 @@ global $wpdb, $wpsl, $wpsl_admin, $wp_version, $wpsl_settings;
                         <h3 class="hndle"><span><?php _e( 'Search', 'wpsl' ); ?></span></h3>
                         <div class="inside">
                             <p>
-                                <label for="wpsl-search-autocomplete"><?php _e( 'Enable autocomplete?', 'wpsl' ); ?></label>
-                                <input type="checkbox" value="" <?php checked( $wpsl_settings['autocomplete'], true ); ?> name="wpsl_search[autocomplete]" id="wpsl-search-autocomplete">
-                            </p>
-                            <p>
-                                <label for="wpsl-results-dropdown"><?php _e( 'Show the max results dropdown?', 'wpsl' ); ?></label>
+                                <label for="wpsl-results-dropdown"><?php _e( 'Show the max results dropdown?', 'wpsl' ); ?></label> 
                                 <input type="checkbox" value="" <?php checked( $wpsl_settings['results_dropdown'], true ); ?> name="wpsl_search[results_dropdown]" id="wpsl-results-dropdown">
                             </p>
                             <p>
-                                <label for="wpsl-radius-dropdown"><?php _e( 'Show the search radius dropdown?', 'wpsl' ); ?></label>
+                                <label for="wpsl-radius-dropdown"><?php _e( 'Show the search radius dropdown?', 'wpsl' ); ?></label> 
                                 <input type="checkbox" value="" <?php checked( $wpsl_settings['radius_dropdown'], true ); ?> name="wpsl_search[radius_dropdown]" id="wpsl-radius-dropdown">
                             </p>
                             <p>
-                                <label for="wpsl-category-filters"><?php _e( 'Enable category filters?', 'wpsl' ); ?></label>
-                                <input type="checkbox" value="" <?php checked( $wpsl_settings['category_filter'], true ); ?> name="wpsl_search[category_filter]" id="wpsl-category-filters" class="wpsl-has-conditional-option">
+                                <label for="wpsl-category-dropdown"><?php _e( 'Show the category dropdown?', 'wpsl' ); ?></label> 
+                                <input type="checkbox" value="" <?php checked( $wpsl_settings['category_dropdown'], true ); ?> name="wpsl_search[category_dropdown]" id="wpsl-category-dropdown">
                             </p>
-                            <div class="wpsl-conditional-option" <?php if ( !$wpsl_settings['category_filter'] ) { echo 'style="display:none;"'; } ?>>
-                                <p>
-                                    <label for="wpsl-cat-filter-types"><?php _e( 'Filter type:', 'wpsl' ); ?></label>
-                                    <?php echo $wpsl_admin->settings_page->create_dropdown( 'filter_types' ); ?>           
-                                </p>
-                            </div>
                             <p>
-                                <label for="wpsl-distance-unit"><?php _e( 'Distance unit', 'wpsl' ); ?>:</label>                          
+                                <label for="wpsl-distance-unit"><?php _e( 'Distance unit', 'wpsl' ); ?>:</label>                             
                                 <span class="wpsl-radioboxes">
                                     <input type="radio" autocomplete="off" value="km" <?php checked( 'km', $wpsl_settings['distance_unit'] ); ?> name="wpsl_search[distance_unit]" id="wpsl-distance-km">
                                     <label for="wpsl-distance-km"><?php _e( 'km', 'wpsl' ); ?></label>
@@ -180,27 +167,21 @@ global $wpdb, $wpsl, $wpsl_admin, $wp_version, $wpsl_settings;
                         <h3 class="hndle"><span><?php _e( 'Map', 'wpsl' ); ?></span></h3>
                         <div class="inside">
                             <p>
-                                <label for="wpsl-auto-locate"><?php _e( 'Attempt to auto-locate the user', 'wpsl' ); ?>:<span class="wpsl-info"><span class="wpsl-info-text wpsl-hide"><?php echo sprintf( __( 'Safari and Chrome %srequire%s a HTTPS connection before the Geolocation feature works.', 'wpsl' ), '<a href="https://wpstorelocator.co/document/html-5-geolocation-not-working-chrome-safari/">', '</a>' ); ?></span></span></label>
+                                <label for="wpsl-auto-locate"><?php _e( 'Attempt to auto-locate the user', 'wpsl' ); ?>:</label> 
                                 <input type="checkbox" value="" <?php checked( $wpsl_settings['auto_locate'], true ); ?> name="wpsl_map[auto_locate]" id="wpsl-auto-locate">
                             </p>
                             <p>
                                 <label for="wpsl-autoload"><?php _e( 'Load locations on page load', 'wpsl' ); ?>:</label> 
-                                <input type="checkbox" value="" <?php checked( $wpsl_settings['autoload'], true ); ?> name="wpsl_map[autoload]" id="wpsl-autoload" class="wpsl-has-conditional-option">
+                                <input type="checkbox" value="" <?php checked( $wpsl_settings['autoload'], true ); ?> name="wpsl_map[autoload]" id="wpsl-autoload">
                             </p>
-                            <div class="wpsl-conditional-option" <?php if ( !$wpsl_settings['autoload'] ) { echo 'style="display:none;"'; } ?>>
-                                <p>
-                                    <label for="wpsl-autoload-limit"><?php _e( 'Number of locations to show', 'wpsl' ); ?>:<span class="wpsl-info"><span class="wpsl-info-text wpsl-hide"><?php echo sprintf( __( 'Although the location data is cached after the first load, a lower number will result in the map being more responsive. %s If this field is left empty or set to 0, then all locations are loaded.', 'wpsl' ), '<br><br>' ); ?></span></span></label>
-                                    <input type="text" value="<?php echo esc_attr( $wpsl_settings['autoload_limit'] ); ?>" name="wpsl_map[autoload_limit]" class="textinput" id="wpsl-autoload-limit">
-                                </p>
-                            </div>
-                            <p>
-                                <label for="wpsl-start-name"><?php _e( 'Start point', 'wpsl' ); ?>:<span class="wpsl-info"><span class="wpsl-info-text wpsl-hide"><?php echo sprintf( __( '%sRequired field.%s %s If auto-locating the user is disabled or fails, the center of the provided city or country will be used as the initial starting point for the user.', 'wpsl' ), '<strong>', '</strong>', '<br><br>' ); ?></span></span></label> 
-                                <input type="text" value="<?php echo esc_attr( $wpsl_settings['start_name'] ); ?>" name="wpsl_map[start_name]" class="textinput" id="wpsl-start-name">
-                                <input type="hidden" value="<?php echo esc_attr( $wpsl_settings['start_latlng'] ); ?>" name="wpsl_map[start_latlng]" id="wpsl-latlng" />
+                            <p id="wpsl-autoload-options" <?php if ( !$wpsl_settings['autoload'] ) { echo 'style="display:none;"'; } ?>>
+                                <label for="wpsl-autoload-limit"><?php _e( 'Number of locations to show', 'wpsl' ); ?>:<span class="wpsl-info"><span class="wpsl-info-text wpsl-hide"><?php echo sprintf( __( 'Although the location data is cached after the first load, a lower number will result in the map being more responsive. %s If this field is left empty or set to 0, then all locations are loaded.', 'wpsl' ), '<br><br>' ); ?></span></span></label>
+                                <input type="text" value="<?php echo esc_attr( $wpsl_settings['autoload_limit'] ); ?>" name="wpsl_map[autoload_limit]" class="textinput" id="wpsl-autoload-limit">
                             </p>
                             <p>
-                                <label for="wpsl-run-fitbounds"><?php _e( 'Auto adjust the zoom level to make sure all markers are visible?', 'wpsl' ); ?><span class="wpsl-info"><span class="wpsl-info-text wpsl-hide"><?php _e( 'This runs after a search is made, and makes sure all the returned locations are visible in the viewport.', 'wpsl' ); ?></span></span></label>
-                                <input type="checkbox" value="" <?php checked( $wpsl_settings['run_fitbounds'], true ); ?> name="wpsl_map[run_fitbounds]" id="wpsl-run-fitbounds">
+                                <label for="wpsl-zoom-name"><?php _e( 'Start point', 'wpsl' ); ?>:<span class="wpsl-info"><span class="wpsl-info-text wpsl-hide"><?php echo sprintf( __( '%sRequired field.%s %s If auto-locating the user is disabled or fails, the center of the provided city or country will be used as the initial starting point for the user.', 'wpsl' ), '<strong>', '</strong>', '<br><br>' ); ?></span></span></label> 
+                                <input type="text" value="<?php echo esc_attr( $wpsl_settings['zoom_name'] ); ?>" name="wpsl_map[zoom_name]" class="textinput" id="wpsl-zoom-name">
+                                <input type="hidden" value="<?php echo esc_attr( $wpsl_settings['zoom_latlng'] ); ?>" name="wpsl_map[zoom_latlng]" id="wpsl-latlng" />
                             </p>
                             <p>
                                 <label for="wpsl-zoom-level"><?php _e( 'Initial zoom level', 'wpsl' ); ?>:</label> 
@@ -299,18 +280,12 @@ global $wpdb, $wpsl, $wpsl_admin, $wp_version, $wpsl_settings;
                                <input type="checkbox" value="" <?php checked( $wpsl_settings['direction_redirect'], true ); ?> name="wpsl_ux[direction_redirect]" id="wpsl-direction-redirect">
                             </p>
                             <p>
-                               <label for="wpsl-more-info"><?php _e( 'Show a "More info" link in the store listings?', 'wpsl' ); ?><span class="wpsl-info"><span class="wpsl-info-text wpsl-hide"><?php echo sprintf( __( 'This places a "More Info" link below the address and will show the phone, fax, email, opening hours and description once the link is clicked.', 'wpsl' ) ); ?></span></span></label> 
-                               <input type="checkbox" value="" <?php checked( $wpsl_settings['more_info'], true ); ?> name="wpsl_ux[more_info]" id="wpsl-more-info" class="wpsl-has-conditional-option">
-                            </p>   
-                            <div class="wpsl-conditional-option" <?php if ( !$wpsl_settings['more_info'] ) { echo 'style="display:none;"'; } ?>>
-                                <p>
-                                    <label for="wpsl-more-info-list"><?php _e( 'Where do you want to show the "More info" details?', 'wpsl' ); ?></label>
-                                    <?php echo $wpsl_admin->settings_page->create_dropdown( 'more_info' ); ?>
-                                </p>
-                            </div>
-                            <p>
-                               <label for="wpsl-contact-details"><?php _e( 'Always show the contact details below the address in the search results?', 'wpsl' ); ?></label> 
-                               <input type="checkbox" value="" <?php checked( $wpsl_settings['show_contact_details'], true ); ?> name="wpsl_ux[show_contact_details]" id="wpsl-contact-details">
+                               <label for="wpsl-more-info"><?php _e( 'Show a "More info" link in the store listings?', 'wpsl' ); ?><span class="wpsl-info"><span class="wpsl-info-text wpsl-hide"><?php echo sprintf( __( 'This places a "More Info" link below the address and will show the phone, fax, email, opening hours and description once the link is clicked. %s If you for example want the contact details to always be visible, then please follow the instructions on %sthis%s page.', 'wpsl' ), '<br><br>', '<a href="http://wpstorelocator.co/document/include-contact-details-in-search-results/">', '</a>' ); ?></span></span></label> 
+                               <input type="checkbox" value="" <?php checked( $wpsl_settings['more_info'], true ); ?> name="wpsl_ux[more_info]" id="wpsl-more-info">
+                            </p>             
+                            <p id="wpsl-more-info-options" <?php if ( !$wpsl_settings['more_info'] ) { echo 'style="display:none;"'; } ?>>
+                                <label for="wpsl-more-info-list"><?php _e( 'Where do you want to show the "More info" details?', 'wpsl' ); ?></label>
+                                <?php echo $wpsl_admin->settings_page->create_dropdown( 'more_info' ); ?>
                             </p>
                             <p>
                                <label for="wpsl-store-url"><?php _e( 'Make the store name clickable if a store URL exists?', 'wpsl' ); ?><span class="wpsl-info"><span class="wpsl-info-text wpsl-hide"><?php echo sprintf( __( 'If %spermalinks%s are enabled, the store name will always link to the store page.', 'wpsl' ), '<a href="' . admin_url( 'edit.php?post_type=wpsl_stores&page=wpsl_settings#wpsl-permalink-settings' ) . '">', '</a>' ); ?></span></span></label> 
@@ -335,10 +310,6 @@ global $wpdb, $wpsl, $wpsl_admin, $wp_version, $wpsl_settings;
                             <p>
                                <label for="wpsl-infowindow-style"><?php _e( 'Use the default style for the info window?', 'wpsl' ); ?><span class="wpsl-info"><span class="wpsl-info-text wpsl-hide"><?php echo sprintf( __( 'If the default style is disabled the %sInfoBox%s library will be used instead. %s This enables you to easily change the look and feel of the info window through the .wpsl-infobox css class.', 'wpsl' ), '<a href="http://google-maps-utility-library-v3.googlecode.com/svn/trunk/infobox/docs/reference.html" target="_blank">', '</a>', '<br><br>' ); ?></span></span></label> 
                                <input type="checkbox" value="default" <?php checked( $wpsl_settings['infowindow_style'], 'default' ); ?> name="wpsl_ux[infowindow_style]" id="wpsl-infowindow-style">
-                            </p>
-                            <p>
-                               <label for="wpsl-hide-country"><?php _e( 'Hide the country in the search results?', 'wpsl' ); ?></label> 
-                               <input type="checkbox" value="" <?php checked( $wpsl_settings['hide_country'], true ); ?> name="wpsl_ux[hide_country]" id="wpsl-hide-country">
                             </p>
                             <p>
                                <label for="wpsl-hide-distance"><?php _e( 'Hide the distance in the search results?', 'wpsl' ); ?></label> 
@@ -367,19 +338,17 @@ global $wpdb, $wpsl, $wpsl_admin, $wp_version, $wpsl_settings;
                         <div class="inside">
                             <?php echo $wpsl_admin->settings_page->show_marker_options(); ?>
                             <p>
-                               <label for="wpsl-marker-clusters"><?php _e( 'Enable marker clusters?', 'wpsl' ); ?><span class="wpsl-info"><span class="wpsl-info-text wpsl-hide"><?php _e( 'Recommended for maps with a large amount of markers.', 'wpsl' ); ?></span></span></label> 
-                               <input type="checkbox" value="" <?php checked( $wpsl_settings['marker_clusters'], true ); ?> name="wpsl_map[marker_clusters]" id="wpsl-marker-clusters" class="wpsl-has-conditional-option">
+                                <label for="wpsl-marker-clusters"><?php _e( 'Enable marker clusters?', 'wpsl' ); ?><span class="wpsl-info"><span class="wpsl-info-text wpsl-hide"><?php _e( 'Recommended for maps with a large amount of markers.', 'wpsl' ); ?></span></span></label> 
+                               <input type="checkbox" value="" <?php checked( $wpsl_settings['marker_clusters'], true ); ?> name="wpsl_map[marker_clusters]" id="wpsl-marker-clusters">
                             </p>
-                            <div class="wpsl-conditional-option" <?php if ( !$wpsl_settings['marker_clusters'] ) { echo 'style="display:none;"'; } ?>>
-                                <p>
-                                   <label for="wpsl-marker-zoom"><?php _e( 'Max zoom level', 'wpsl' ); ?>:<span class="wpsl-info"><span class="wpsl-info-text wpsl-hide"><?php _e( 'If this zoom level is reached or exceeded, then all markers are moved out of the marker cluster and shown as individual markers.', 'wpsl' ); ?></span></span></label> 
-                                   <?php echo $wpsl_admin->settings_page->show_cluster_options( 'cluster_zoom' ); ?>
-                                </p>
-                                <p>
-                                   <label for="wpsl-marker-cluster-size"><?php _e( 'Cluster size', 'wpsl' ); ?>:<span class="wpsl-info"><span class="wpsl-info-text wpsl-hide"><?php echo sprintf( __( 'The grid size of a cluster in pixels. %s A larger number will result in a lower amount of clusters and also make the algorithm run faster.', 'wpsl' ), '<br><br>' ); ?></span></span></label> 
-                                   <?php echo $wpsl_admin->settings_page->show_cluster_options( 'cluster_size' ); ?>
-                                </p>
-                            </div>
+                            <p class="wpsl-cluster-options" <?php if ( !$wpsl_settings['marker_clusters'] ) { echo 'style="display:none;"'; } ?>>
+                               <label for="wpsl-marker-zoom"><?php _e( 'Max zoom level', 'wpsl' ); ?>:<span class="wpsl-info"><span class="wpsl-info-text wpsl-hide"><?php _e( 'If this zoom level is reached or exceeded, then all markers are moved out of the marker cluster and shown as individual markers.', 'wpsl' ); ?></span></span></label> 
+                               <?php echo $wpsl_admin->settings_page->show_cluster_options( 'cluster_zoom' ); ?>
+                            </p>
+                            <p class="wpsl-cluster-options" <?php if ( !$wpsl_settings['marker_clusters'] ) { echo 'style="display:none;"'; } ?>>
+                               <label for="wpsl-marker-cluster-size"><?php _e( 'Cluster size', 'wpsl' ); ?>:<span class="wpsl-info"><span class="wpsl-info-text wpsl-hide"><?php echo sprintf( __( 'The grid size of a cluster in pixels. %s A larger number will result in a lower amount of clusters and also make the algorithm run faster.', 'wpsl' ), '<br><br>' ); ?></span></span></label> 
+                               <?php echo $wpsl_admin->settings_page->show_cluster_options( 'cluster_size' ); ?>
+                            </p>
                             <p class="submit">
                                 <input type="submit" value="<?php _e( 'Save Changes', 'wpsl' ); ?>" class="button-primary">
                             </p>
@@ -403,9 +372,9 @@ global $wpdb, $wpsl, $wpsl_admin, $wp_version, $wpsl_settings;
                             </p>
                             <p>
                                 <label for="wpsl-editor-hide-hours"><?php _e( 'Hide the opening hours?', 'wpsl' ); ?></label> 
-                                <input type="checkbox" value="" <?php checked( $wpsl_settings['hide_hours'], true ); ?> name="wpsl_editor[hide_hours]" id="wpsl-editor-hide-hours" class="wpsl-has-conditional-option">
+                                <input type="checkbox" value="" <?php checked( $wpsl_settings['hide_hours'], true ); ?> name="wpsl_editor[hide_hours]" id="wpsl-editor-hide-hours">
                             </p>
-                            <div class="wpsl-conditional-option" <?php if ( $wpsl_settings['hide_hours'] ) { echo 'style="display:none"'; } ?>>
+                            <div class="wpsl-hours" <?php if ( $wpsl_settings['hide_hours'] ) { echo 'style="display:none"'; } ?>>
                                 <?php if ( get_option( 'wpsl_legacy_support' ) ) { // Is only set for users who upgraded from 1.x ?>
                                 <p>
                                     <label for="wpsl-editor-hour-input"><?php _e( 'Opening hours input type', 'wpsl' ); ?>:</label> 
@@ -445,19 +414,17 @@ global $wpdb, $wpsl, $wpsl_admin, $wp_version, $wpsl_settings;
                         <div class="inside">
                             <p>
                                <label for="wpsl-permalinks-active"><?php _e( 'Enable permalink?', 'wpsl' ); ?></label> 
-                               <input type="checkbox" value="" <?php checked( $wpsl_settings['permalinks'], true ); ?> name="wpsl_permalinks[active]" id="wpsl-permalinks-active" class="wpsl-has-conditional-option">
+                               <input type="checkbox" value="" <?php checked( $wpsl_settings['permalinks'], true ); ?> name="wpsl_permalinks[active]" id="wpsl-permalinks-active">
                             </p>
-                            <div class="wpsl-conditional-option" <?php if ( !$wpsl_settings['permalinks'] ) { echo 'style="display:none;"'; } ?>>
-                                <p>
-                                    <label for="wpsl-permalinks-slug"><?php _e( 'Store slug', 'wpsl' ); ?>:</label> 
-                                    <input type="text" value="<?php echo esc_attr( $wpsl_settings['permalink_slug'] ); ?>" name="wpsl_permalinks[slug]" class="textinput" id="wpsl-permalinks-slug">
-                                </p>
-                                <p>
-                                    <label for="wpsl-category-slug"><?php _e( 'Category slug', 'wpsl' ); ?>:</label> 
-                                    <input type="text" value="<?php echo esc_attr( $wpsl_settings['category_slug'] ); ?>" name="wpsl_permalinks[category_slug]" class="textinput" id="wpsl-category-slug">
-                                </p>
-                                <em><?php echo sprintf( __( 'The permalink slugs %smust be unique%s on your site.', 'wpsl' ), '<strong>', '</strong>' ); ?></em>
-                            </div>
+                            <p class="wpsl-permalink-option" <?php if ( !$wpsl_settings['permalinks'] ) { echo 'style="display:none;"'; } ?>>
+                                <label for="wpsl-permalinks-slug"><?php _e( 'Store slug', 'wpsl' ); ?>:</label> 
+                                <input type="text" value="<?php echo esc_attr( $wpsl_settings['permalink_slug'] ); ?>" name="wpsl_permalinks[slug]" class="textinput" id="wpsl-permalinks-slug">
+                            </p>
+                            <p class="wpsl-permalink-option" <?php if ( !$wpsl_settings['permalinks'] ) { echo 'style="display:none;"'; } ?>>
+                                <label for="wpsl-category-slug"><?php _e( 'Category slug', 'wpsl' ); ?>:</label> 
+                                <input type="text" value="<?php echo esc_attr( $wpsl_settings['category_slug'] ); ?>" name="wpsl_permalinks[category_slug]" class="textinput" id="wpsl-category-slug">
+                            </p>
+                            <em class="wpsl-permalink-option"><?php echo sprintf( __( 'The permalink slugs %smust be unique%s on your site.', 'wpsl' ), '<strong>', '</strong>' ); ?></em>
                             <p class="submit">
                                 <input type="submit" value="<?php _e( 'Save Changes', 'wpsl' ); ?>" class="button-primary">
                             </p>
@@ -509,10 +476,6 @@ global $wpdb, $wpsl, $wpsl_admin, $wp_version, $wpsl_settings;
                             <p>
                                 <label for="wpsl-category"><?php _e( 'Category filter', 'wpsl' ); ?>:</label> 
                                 <input type="text" value="<?php echo esc_attr( $wpsl->i18n->get_translation( 'category_label', __( 'Category', 'wpsl' ) ) ); ?>" name="wpsl_label[category]" class="textinput" id="wpsl-category">
-                            </p>
-                            <p>
-                                <label for="wpsl-category-default"><?php _e( 'Category first item', 'wpsl' ); ?>:</label> 
-                                <input type="text" value="<?php echo esc_attr( $wpsl->i18n->get_translation( 'category_default_label', __( 'Any', 'wpsl' ) ) ); ?>" name="wpsl_label[category_default]" class="textinput" id="wpsl-category-default">
                             </p>
                             <p>
                                 <label for="wpsl-more-info"><?php _e( 'More info', 'wpsl' ); ?>:</label> 
@@ -586,10 +549,6 @@ global $wpdb, $wpsl, $wpsl_admin, $wp_version, $wpsl_settings;
                             <p>
                                <label for="wpsl-debug"><?php _e( 'Enable store locator debug?', 'wpsl' ); ?><span class="wpsl-info"><span class="wpsl-info-text wpsl-hide"><?php echo sprintf( __( 'This disables the WPSL transient cache. %sThe transient cache is only used if the %sLoad locations on page load%s option is enabled.', 'wpsl' ), '<br><br>', '<em>', '</em>' ); ?></span></span></label> 
                                <input type="checkbox" value="" <?php checked( $wpsl_settings['debug'], true ); ?> name="wpsl_tools[debug]" id="wpsl-debug">
-                            </p>
-                            <p>
-                               <label for="wpsl-deregister-gmaps"><?php _e( 'Enable compatibility mode?', 'wpsl' ); ?><span class="wpsl-info"><span class="wpsl-info-text wpsl-hide"><?php echo sprintf( __( 'If the %sbrowser console%s shows the error below, then enabling this option should fix it. %s %sYou have included the Google Maps API multiple times on this page. This may cause unexpected errors.%s %s This error can in some situations break the store locator map.', 'wpsl' ), '<a href="https://codex.wordpress.org/Using_Your_Browser_to_Diagnose_JavaScript_Errors#Step_3:_Diagnosis">', '</a>', '<br><br>', '<em>', '</em>', '<br><br>' ); ?></span></span></label>
-                               <input type="checkbox" value="" <?php checked( $wpsl_settings['deregister_gmaps'], true ); ?> name="wpsl_tools[deregister_gmaps]" id="wpsl-deregister-gmaps">
                             </p>
                             <p>
                                <label for="wpsl-transient"><?php _e( 'WPSL transients', 'wpsl' ); ?></label> 

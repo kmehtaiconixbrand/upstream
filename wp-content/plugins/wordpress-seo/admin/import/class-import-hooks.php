@@ -86,4 +86,5 @@ abstract class WPSEO_Import_Hooks {
 	protected function is_active() {
 		return is_plugin_active( $this->plugin_file );
 	}
+
 }

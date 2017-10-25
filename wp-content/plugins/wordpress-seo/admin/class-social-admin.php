@@ -37,25 +37,28 @@ class WPSEO_Social_Admin extends WPSEO_Metabox {
 		/* translators: %s expands to the social network's name */
 		$image_text       = __( 'If you want to override the image used on %s for this post, upload / choose an image or add the URL here.', 'wordpress-seo' );
 		/* translators: %1$s expands to the social network, %2$s to the recommended image size */
-		$image_size_text  = __( 'The recommended image size for %1$s is %2$s pixels.', 'wordpress-seo' );
+		$image_size_text  = __( 'The recommended image size for %1$s is %2$spx.', 'wordpress-seo' );
 
 		$options = WPSEO_Options::get_option( 'wpseo_social' );
 
 		$social_networks = array(
 			'opengraph'  => __( 'Facebook', 'wordpress-seo' ),
 			'twitter'    => __( 'Twitter', 'wordpress-seo' ),
+			'googleplus' => __( 'Google+', 'wordpress-seo' ),
 		);
 
 		// Source: https://blog.bufferapp.com/ideal-image-sizes-social-media-posts.
 		$recommended_image_sizes = array(
-			/* translators: %1$s expands to the image recommended width, %2$s to its height. */
-			'opengraph'   => sprintf( __( '%1$s by %2$s', 'wordpress-seo' ), '1200', '630' ), // Source: https://developers.facebook.com/docs/sharing/best-practices#images.
-			/* translators: %1$s expands to the image recommended width, %2$s to its height. */
-			'twitter'     => sprintf( __( '%1$s by %2$s', 'wordpress-seo' ), '1024', '512' ),
+			'opengraph'   => '1200 x 628',
+			'twitter'     => '1024 x 512',
+			'google-plus' => '800 x 1200',
 		);
 
 		foreach ( $social_networks as $network => $label ) {
 			if ( true === $options[ $network ] ) {
+				if ( 'googleplus' == $network ) {
+					$network = 'google-plus'; // Yuck, I know.
+				}
 
 				self::$meta_fields['social'][ $network . '-title' ]['title']       = sprintf( __( '%s Title', 'wordpress-seo' ), $label );
 				self::$meta_fields['social'][ $network . '-title' ]['description'] = sprintf( $title_text, $label );
@@ -77,21 +80,15 @@ class WPSEO_Social_Admin extends WPSEO_Metabox {
 	public function get_meta_section() {
 		$tabs = array();
 		$social_meta_fields = $this->get_meta_field_defs( 'social' );
-		$single = true;
-
-		if ( $this->options['opengraph'] === true && $this->options['twitter'] === true ) {
-			$single = null;
-		}
 
 		if ( $this->options['opengraph'] === true ) {
 			$tabs[] = new WPSEO_Metabox_Form_Tab(
 				'facebook',
 				$this->get_social_tab_content( 'opengraph', $social_meta_fields ),
-				'<span class="screen-reader-text">' . __( 'Facebook / Open Graph metadata', 'wordpress-seo' ) . '</span><span class="dashicons dashicons-facebook-alt"></span>',
+				'<span class="dashicons dashicons-facebook-alt"></span>',
 				array(
-					'link_aria_label' => __( 'Facebook / Open Graph metadata', 'wordpress-seo' ),
-					'link_class'      => 'yoast-tooltip yoast-tooltip-se',
-					'single'          => $single,
+					'link_alt' => __( 'Facebook / Open Graph metadata', 'wordpress-seo' ),
+					'link_title' => __( 'Facebook / Open Graph metadata', 'wordpress-seo' ),
 				)
 			);
 		}
@@ -100,22 +97,33 @@ class WPSEO_Social_Admin extends WPSEO_Metabox {
 			$tabs[] = new WPSEO_Metabox_Form_Tab(
 				'twitter',
 				$this->get_social_tab_content( 'twitter', $social_meta_fields ),
-				'<span class="screen-reader-text">' . __( 'Twitter metadata', 'wordpress-seo' ) . '</span><span class="dashicons dashicons-twitter"></span>',
+				'<span class="dashicons dashicons-twitter"></span>',
 				array(
-					'link_aria_label' => __( 'Twitter metadata', 'wordpress-seo' ),
-					'link_class'      => 'yoast-tooltip yoast-tooltip-se',
-					'single'          => $single,
+					'link_alt' => __( 'Twitter metadata', 'wordpress-seo' ),
+					'link_title' => __( 'Twitter metadata', 'wordpress-seo' ),
+				)
+			);
+		}
+
+		if ( $this->options['googleplus'] === true ) {
+			$tabs[] = new WPSEO_Metabox_Form_Tab(
+				'googleplus',
+				$this->get_social_tab_content( 'google-plus', $social_meta_fields ),
+				'<span class="dashicons dashicons-googleplus"></span>',
+				array(
+					'link_alt' => __( 'Google+ metadata', 'wordpress-seo' ),
+					'link_title' => __( 'Google+ metadata', 'wordpress-seo' ),
 				)
 			);
 		}
 
 		return new WPSEO_Metabox_Tab_Section(
 			'social',
-			'<span class="screen-reader-text">' . __( 'Social', 'wordpress-seo' ) . '</span><span class="dashicons dashicons-share"></span>',
+			'<span class="dashicons dashicons-share"></span>',
 			$tabs,
 			array(
-				'link_aria_label' => __( 'Social', 'wordpress-seo' ),
-				'link_class'      => 'yoast-tooltip yoast-tooltip-e',
+				'link_alt' => __( 'Social', 'wordpress-seo' ),
+				'link_title' => __( 'Social', 'wordpress-seo' ),
 			)
 		);
 	}
@@ -123,7 +131,7 @@ class WPSEO_Social_Admin extends WPSEO_Metabox {
 	/**
 	 * Generates the html for a social settings tab for one of the supported social media.
 	 *
-	 * @param string $medium can be 'opengraph' or 'twitter'.
+	 * @param string $medium can be 'opengraph', 'twitter' or 'googleplus'.
 	 * @param array  $meta_field_defs The social meta field definitions.
 	 *
 	 * @return string
@@ -135,46 +143,13 @@ class WPSEO_Social_Admin extends WPSEO_Metabox {
 			$medium . '-image',
 		);
 
-		$tab_content = $this->get_premium_notice( $medium );
+		$tab_content = '';
 
 		foreach ( $field_names as $field_name ) {
 			$tab_content .= $this->do_meta_box( $meta_field_defs[ $field_name ], $field_name );
 		}
 
 		return $tab_content;
-	}
-
-	/**
-	 * Returns the Upgrade to Premium notice.
-	 *
-	 * @param string $network The social network.
-	 * @return string The notice HTML on the free version, empty string on premium.
-	 */
-	public function get_premium_notice( $network ) {
-		$features = new WPSEO_Features();
-		if ( $features->is_premium() ) {
-			return '';
-		}
-
-		$network_name = __( 'Facebook', 'wordpress-seo' );
-
-		if ( 'twitter' === $network ) {
-			$network_name = __( 'Twitter', 'wordpress-seo' );
-		}
-
-		return sprintf( "<div class='notice inline yoast-notice yoast-notice-go-premium'>
-			<p>%s</p>
-			<p><a href='%s' target='_blank'>%s</a></p>
-		</div>",
-			/* translators: %1$s expands to the social network's name, %2$s to Yoast SEO Premium. */
-			sprintf( __( 'Do you want to preview what it will look like if people share this post on %1$s? You can, with %2$s.', 'wordpress-seo' ),
-				$network_name,
-				'<strong>Yoast SEO Premium</strong>'
-			),
-			WPSEO_Shortlinker::get( 'https://yoa.st/179' ),
-			/* translators: %s expands to Yoast SEO Premium. */
-			sprintf( 'Find out why you should upgrade to %s', 'Yoast SEO Premium' )
-		);
 	}
 
 	/**
@@ -198,12 +173,10 @@ class WPSEO_Social_Admin extends WPSEO_Metabox {
 	public function og_data_compare( $post ) {
 
 		// Check if post data is available, if post_id is set and if original post_status is publish.
-		// @codingStandardsIgnoreStart
 		if (
 			! empty( $_POST ) && ! empty( $post->ID ) && $post->post_status == 'publish' &&
 			isset( $_POST['original_post_status'] ) && $_POST['original_post_status'] === 'publish'
 		) {
-			// @codingStandardsIgnoreEnd
 
 			$fields_to_compare = array(
 				'opengraph-title',
@@ -235,7 +208,6 @@ class WPSEO_Social_Admin extends WPSEO_Metabox {
 
 	/********************** DEPRECATED METHODS **********************/
 
-	// @codeCoverageIgnoreStart
 	/**
 	 * Define the meta boxes for the Social tab
 	 *
@@ -259,7 +231,7 @@ class WPSEO_Social_Admin extends WPSEO_Metabox {
 	 * @return string
 	 */
 	public function tab_header() {
-		_deprecated_function( __METHOD__, 'WPSEO 3.0' );
+		_deprecated_function( 'WPSEO_Social_Admin::tab_header', 'WPSEO 3.0' );
 
 		return '';
 	}
@@ -270,9 +242,8 @@ class WPSEO_Social_Admin extends WPSEO_Metabox {
 	 * @return string
 	 */
 	public function tab_content() {
-		_deprecated_function( __METHOD__, 'WPSEO 3.0' );
+		_deprecated_function( 'WPSEO_Social_Admin::tab_content', 'WPSEO 3.0' );
 
 		return '';
 	}
-	// @codeCoverageIgnoreEnd
 } /* End of class */

@@ -1,6 +1,12 @@
 <?php
 /**
  * Fired when the plugin is uninstalled.
+ *
+ * @package   Duplicator
+ * @author    Cory Lamle
+ * @license   GPL-2.0+
+ * @link      http://lifeinthegrid.com
+ * @copyright 2013 LifeInTheGrid.com
  */
 
 // If uninstall not called from WordPress, then exit
@@ -8,8 +14,8 @@ if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
         exit;
 }
 require_once 'define.php';
-require_once 'classes/class.settings.php';
-require_once 'classes/utilities/class.u.php';
+require_once 'classes/settings.php';
+require_once 'classes/utility.php';
 
 global $wpdb;
 $DUP_Settings = new DUP_Settings();
@@ -22,8 +28,8 @@ delete_option('duplicator_version_plugin');
 //Remvoe entire wp-snapshots directory
 if (DUP_Settings::Get('uninstall_files')) {
 
-	$ssdir = DUP_Util::safePath(DUPLICATOR_SSDIR_PATH);
-	$ssdir_tmp = DUP_Util::safePath(DUPLICATOR_SSDIR_PATH_TMP);
+	$ssdir = DUP_Util::SafePath(DUPLICATOR_SSDIR_PATH);
+	$ssdir_tmp = DUP_Util::SafePath(DUPLICATOR_SSDIR_PATH_TMP);
 
 	//Sanity check for strange setup
 	$check = glob("{$ssdir}/wp-config.php");

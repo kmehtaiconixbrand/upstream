@@ -16,18 +16,10 @@ class WPSEO_Admin_Pages {
 	public $currentoption = 'wpseo';
 
 	/**
-	 * Holds the asset manager.
-	 *
-	 * @var WPSEO_Admin_Asset_Manager
-	 */
-	private $asset_manager;
-
-	/**
 	 * Class constructor, which basically only hooks the init function on the init hook
 	 */
 	function __construct() {
 		add_action( 'init', array( $this, 'init' ), 20 );
-		$this->asset_manager = new WPSEO_Admin_Asset_Manager();
 	}
 
 	/**
@@ -36,25 +28,12 @@ class WPSEO_Admin_Pages {
 	function init() {
 		if ( filter_input( INPUT_GET, 'wpseo_reset_defaults' ) && wp_verify_nonce( filter_input( INPUT_GET, 'nonce' ), 'wpseo_reset_defaults' ) && current_user_can( 'manage_options' ) ) {
 			WPSEO_Options::reset();
-			wp_redirect( admin_url( 'admin.php?page=' . WPSEO_Admin::PAGE_IDENTIFIER ) );
+			wp_redirect( admin_url( 'admin.php?page=wpseo_dashboard' ) );
 		}
 
-		add_action( 'admin_init', array( $this, 'admin_init' ) );
-		add_action( 'admin_enqueue_scripts', array( $this, 'config_page_scripts' ) );
-		add_action( 'admin_enqueue_scripts', array( $this, 'config_page_styles' ) );
-	}
-
-	/**
-	 * Run admin-specific actions.
-	 */
-	public function admin_init() {
-
-		$page         = filter_input( INPUT_GET, 'page' );
-		$tool         = filter_input( INPUT_GET, 'tool' );
-		$export_nonce = filter_input( INPUT_POST, WPSEO_Export::NONCE_NAME );
-
-		if ( 'wpseo_tools' === $page && 'import-export' === $tool && $export_nonce !== null ) {
-			$this->do_yoast_export();
+		if ( WPSEO_Utils::grant_access() ) {
+			add_action( 'admin_enqueue_scripts', array( $this, 'config_page_scripts' ) );
+			add_action( 'admin_enqueue_scripts', array( $this, 'config_page_styles' ) );
 		}
 	}
 
@@ -66,36 +45,53 @@ class WPSEO_Admin_Pages {
 		wp_enqueue_style( 'thickbox' );
 		wp_enqueue_style( 'global' );
 		wp_enqueue_style( 'wp-admin' );
-		$this->asset_manager->enqueue_style( 'select2' );
+		// TODO minified toggle styles. R.
+		wp_register_style( 'yoast-toggle-switch-lib', plugins_url( 'css/toggle-switch/toggle-switch.css', WPSEO_FILE ), array(), '4.0.2' );
+		wp_register_style( 'yoast-toggle-switch', plugins_url( 'css/toggle-switch.css', WPSEO_FILE ), array( 'yoast-toggle-switch-lib' ), WPSEO_VERSION );
+		wp_enqueue_style( 'yoast-admin-css', plugins_url( 'css/yst_plugin_tools-' . '310' . WPSEO_CSSJS_SUFFIX . '.css', WPSEO_FILE ), array( 'yoast-toggle-switch' ), WPSEO_VERSION );
 
-		$this->asset_manager->enqueue_style( 'admin-css' );
-
-		$this->asset_manager->enqueue_style( 'kb-search' );
+		if ( is_rtl() ) {
+			wp_enqueue_style( 'wpseo-rtl', plugins_url( 'css/wpseo-rtl' . WPSEO_CSSJS_SUFFIX . '.css', WPSEO_FILE ), array(), WPSEO_VERSION );
+		}
 	}
 
 	/**
 	 * Loads the required scripts for the config page.
 	 */
 	function config_page_scripts() {
-		$this->asset_manager->enqueue_script( 'admin-script' );
-		$this->asset_manager->enqueue_script( 'help-center' );
-
+		wp_enqueue_script( 'wpseo-admin-script', plugins_url( 'js/wp-seo-admin-' . '310' . WPSEO_CSSJS_SUFFIX . '.js', WPSEO_FILE ), array(
+			'jquery',
+			'jquery-ui-core',
+			'jquery-ui-progressbar',
+		), WPSEO_VERSION, true );
+		wp_localize_script( 'wpseo-admin-script', 'wpseoAdminL10n', $this->localize_admin_script() );
 		wp_enqueue_script( 'dashboard' );
 		wp_enqueue_script( 'thickbox' );
 
+
+
 		$page = filter_input( INPUT_GET, 'page' );
+		$tool = filter_input( INPUT_GET, 'tool' );
 
-		wp_localize_script( WPSEO_Admin_Asset_Manager::PREFIX . 'admin-script', 'wpseoSelect2Locale', WPSEO_Utils::get_language( WPSEO_Utils::get_user_locale() ) );
-
-		if ( in_array( $page, array( 'wpseo_social', WPSEO_Admin::PAGE_IDENTIFIER ) ) ) {
+		if ( in_array( $page, array( 'wpseo_social', 'wpseo_dashboard' ) ) ) {
 			wp_enqueue_media();
-
-			$this->asset_manager->enqueue_script( 'admin-media' );
-			wp_localize_script( WPSEO_Admin_Asset_Manager::PREFIX . 'admin-media', 'wpseoMediaL10n', $this->localize_media_script() );
+			wp_enqueue_script( 'wpseo-admin-media', plugins_url( 'js/wp-seo-admin-media-' . '310' . WPSEO_CSSJS_SUFFIX . '.js', WPSEO_FILE ), array(
+				'jquery',
+				'jquery-ui-core',
+			), WPSEO_VERSION, true );
+			wp_localize_script( 'wpseo-admin-media', 'wpseoMediaL10n', $this->localize_media_script() );
 		}
 
-		if ( 'wpseo_tools' === $page ) {
-			$this->enqueue_tools_scripts();
+		if ( 'wpseo_tools' === $page && empty( $tool ) ) {
+			wp_enqueue_script( 'yoast-seo', plugins_url( 'js/dist/yoast-seo/yoast-seo-' . '310' . '.min.js', WPSEO_FILE ), null, WPSEO_VERSION, true );
+		}
+
+		if ( 'wpseo_tools' === $page && 'bulk-editor' === $tool ) {
+			wp_enqueue_script( 'wpseo-bulk-editor', plugins_url( 'js/wp-seo-bulk-editor-' . '310' . WPSEO_CSSJS_SUFFIX . '.js', WPSEO_FILE ), array( 'jquery' ), WPSEO_VERSION, true );
+		}
+
+		if ( 'wpseo_tools' === $page && 'import-export' === $tool ) {
+			wp_enqueue_script( 'wpseo-export', plugins_url( 'js/wp-seo-export-' . '302' . WPSEO_CSSJS_SUFFIX . '.js', WPSEO_FILE ), array( 'jquery' ), WPSEO_VERSION, true );
 		}
 	}
 
@@ -111,47 +107,24 @@ class WPSEO_Admin_Pages {
 	}
 
 	/**
-	 * Enqueues and handles all the tool dependencies.
+	 * Pass some variables to js for the admin JS module.
+	 *
+	 * %s is replaced with <code>%s</code> and replaced again in the javascript with the actual variable.
+	 *
+	 * @return  array
 	 */
-	private function enqueue_tools_scripts() {
-		$tool = filter_input( INPUT_GET, 'tool' );
-
-		if ( empty( $tool ) ) {
-			$this->asset_manager->enqueue_script( 'yoast-seo' );
-		}
-
-		if ( 'bulk-editor' === $tool ) {
-			$this->asset_manager->enqueue_script( 'bulk-editor' );
-		}
-	}
-
-	/**
-	 * Runs the yoast exporter class to possibly init the file download.
-	 */
-	private function do_yoast_export() {
-		check_admin_referer( WPSEO_Export::NONCE_ACTION, WPSEO_Export::NONCE_NAME );
-
-		if ( ! WPSEO_Capability_Utils::current_user_can( 'wpseo_manage_options' ) ) {
-			return;
-		}
-
-		$wpseo_post       = filter_input( INPUT_POST, 'wpseo' );
-		$include_taxonomy = ! empty( $wpseo_post['include_taxonomy'] );
-		$export           = new WPSEO_Export( $include_taxonomy );
-
-		if ( $export->has_error() ) {
-			add_action( 'admin_notices', array( $export, 'set_error_hook' ) );
-
-		}
+	public function localize_admin_script() {
+		return array(
+			/* translators: %s: '%%term_title%%' variable used in titles and meta's template that's not compatible with the given template */
+			'variable_warning' => sprintf( __( 'Warning: the variable %s cannot be used in this template.', 'wordpress-seo' ), '<code>%s</code>' ) . ' ' . __( 'See the help tab for more info.', 'wordpress-seo' ),
+			'locale' => get_locale(),
+		);
 	}
 
 	/********************** DEPRECATED METHODS **********************/
 
-	// @codeCoverageIgnoreStart
 	/**
 	 * Exports the current site's Yoast SEO settings.
-	 *
-	 * @deprecated 2.0
 	 *
 	 * @param bool $include_taxonomy Whether to include the taxonomy metadata the plugin creates.
 	 *
@@ -164,8 +137,9 @@ class WPSEO_Admin_Pages {
 		if ( $export->success ) {
 			return $export->export_zip_url;
 		}
-
-		return false;
+		else {
+			return false;
+		}
 	}
 
 	/**
@@ -432,5 +406,4 @@ class WPSEO_Admin_Pages {
 		_deprecated_function( __METHOD__, 'WPSEO 1.5.0', 'WPSEO_Options::reset()' );
 		WPSEO_Options::reset();
 	}
-	// @codeCoverageIgnoreEnd
 } /* End of class */

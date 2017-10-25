@@ -46,20 +46,23 @@ if ( !class_exists( 'WPSL_Post_Types' ) ) {
                 $exclude_from_search = true;
                 $rewrite             = false;
             }
-
+            
+            $singular = __( 'Store', 'wpsl' );
+            $plural   = __( 'Stores', 'wpsl' );
+            
             // The labels for the wpsl_stores post type.
             $labels = apply_filters( 'wpsl_post_type_labels', array(
                     'name'               => __( 'Store Locator', 'wpsl' ),
-                    'all_items'          => __( 'All Stores', 'wpsl' ),
-                    'singular_name'      => __( 'Store', 'wpsl' ),
-                    'add_new'            => __( 'New Store', 'wpsl' ),
-                    'add_new_item'       => __( 'Add New Store', 'wpsl' ),
-                    'edit_item'          => __( 'Edit Store', 'wpsl' ),
-                    'new_item'           => __( 'New Store', 'wpsl' ),
-                    'view_item'          => __( 'View Stores', 'wpsl' ),
-                    'search_items'       => __( 'Search Stores', 'wpsl' ),
-                    'not_found'          => __( 'No Stores found', 'wpsl' ),
-                    'not_found_in_trash' => __( 'No Stores found in trash', 'wpsl' ),
+                    'all_items'          => sprintf( __( 'All %s', 'wpsl' ), $plural ),
+                    'singular_name'      => $singular,
+                    'add_new'            => sprintf( __( 'New %s', 'wpsl' ), $singular ),
+                    'add_new_item'       => sprintf( __( 'Add New %s', 'wpsl' ), $singular ),
+                    'edit_item'          => sprintf( __( 'Edit %s', 'wpsl' ), $singular ),
+                    'new_item'           => sprintf( __( 'New %s', 'wpsl' ), $singular ),
+                    'view_item'          => sprintf( __( 'View %s', 'wpsl' ), $plural ),
+                    'search_items'       => sprintf( __( 'Search %s', 'wpsl' ), $plural ),
+                    'not_found'          => sprintf( __( 'No %s found', 'wpsl' ), $plural ),
+                    'not_found_in_trash' => sprintf( __( 'No %s found in trash', 'wpsl' ), $plural )
                 ) 
             );
             

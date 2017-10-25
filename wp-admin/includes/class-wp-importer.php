@@ -136,15 +136,13 @@ class WP_Importer {
 				fwrite( STDERR, "Error: can not determine blog_id from $blog_id\n" );
 				exit();
 			}
-			if ( empty( $parsed['path'] ) ) {
+			if ( empty( $parsed['path'] ) )
 				$parsed['path'] = '/';
-			}
-			$blogs = get_sites( array( 'domain' => $parsed['host'], 'number' => 1, 'path' => $parsed['path'] ) );
-			if ( ! $blogs ) {
+			$blog = get_blog_details( array( 'domain' => $parsed['host'], 'path' => $parsed['path'] ) );
+			if ( !$blog ) {
 				fwrite( STDERR, "Error: Could not find blog\n" );
 				exit();
 			}
-			$blog = array_shift( $blogs );
 			$blog_id = (int) $blog->blog_id;
 		}
 

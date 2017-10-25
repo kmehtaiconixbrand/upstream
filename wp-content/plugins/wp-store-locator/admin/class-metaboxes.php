@@ -345,7 +345,7 @@ if ( !class_exists( 'WPSL_Metaboxes' ) ) {
 
             <p>
                 <label for="wpsl-<?php echo esc_attr( $args['key'] ); ?>"><?php echo esc_html( $args['data']['label'] ) . ': ' . $this->is_required_field( $args['data'] ); ?></label>
-                <?php wp_editor( $saved_value, 'wpsleditor_' . wpsl_random_chars(), $settings = array('textarea_name' => 'wpsl['. esc_attr( $args['key'] ).']') ); ?>
+                <?php wp_editor( $saved_value, 'wpsleditor', $settings = array('textarea_name' => 'wpsl['. esc_attr( $args['key'] ).']') ); ?>
             </p>
 
             <?php

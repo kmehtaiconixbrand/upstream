@@ -5,8 +5,6 @@
  * @deprecated 3.0 Removed.
  */
 
-_deprecated_file( __FILE__, 'WPSEO 3.0' );
-
 /**
  * @deprecated 3.0 Removed, use javascript instead.
  */
@@ -36,7 +34,7 @@ class Yoast_TextStatistics {
 	 * @param string $strEncoding Optional character encoding.
 	 */
 	public function __construct( $strEncoding = '' ) {
-		_deprecated_constructor( __CLASS__, 'WPSEO 3.0' );
+		_deprecated_constructor( 'Yoast_TextStatistics', 'WPSEO 3.0' );
 	}
 
 	/**
@@ -47,7 +45,7 @@ class Yoast_TextStatistics {
 	 * @return int|float
 	 */
 	public function flesch_kincaid_reading_ease( $strText ) {
-		_deprecated_function( __METHOD__, 'WPSEO 3.0' );
+		_deprecated_function( 'Yoast_TextStatistics::flesch_kincaid_reading_ease', 'WPSEO 3.0' );
 
 		return 0;
 	}
@@ -60,7 +58,7 @@ class Yoast_TextStatistics {
 	 * @return int
 	 */
 	public function text_length( $strText ) {
-		_deprecated_function( __METHOD__, 'WPSEO 3.0' );
+		_deprecated_function( 'Yoast_TextStatistics::text_length', 'WPSEO 3.0' );
 
 		return 0;
 	}
@@ -73,7 +71,7 @@ class Yoast_TextStatistics {
 	 * @return int
 	 */
 	public function letter_count( $strText ) {
-		_deprecated_function( __METHOD__, 'WPSEO 3.0' );
+		_deprecated_function( 'Yoast_TextStatistics::letter_count', 'WPSEO 3.0' );
 
 		return 0;
 	}
@@ -86,7 +84,7 @@ class Yoast_TextStatistics {
 	 * @return string
 	 */
 	protected function clean_text( $strText ) {
-		_deprecated_function( __METHOD__, 'WPSEO 3.0' );
+		_deprecated_function( 'Yoast_TextStatistics::clean_text', 'WPSEO 3.0' );
 
 		return '';
 	}
@@ -99,7 +97,7 @@ class Yoast_TextStatistics {
 	 * @return string
 	 */
 	protected function lower_case( $strText ) {
-		_deprecated_function( __METHOD__, 'WPSEO 3.0' );
+		_deprecated_function( 'Yoast_TextStatistics::lower_case', 'WPSEO 3.0' );
 
 		return '';
 	}
@@ -112,7 +110,7 @@ class Yoast_TextStatistics {
 	 * @return string
 	 */
 	protected function upper_case( $strText ) {
-		_deprecated_function( __METHOD__, 'WPSEO 3.0' );
+		_deprecated_function( 'Yoast_TextStatistics::upper_case', 'WPSEO 3.0' );
 
 		return '';
 	}
@@ -125,7 +123,7 @@ class Yoast_TextStatistics {
 	 * @return int
 	 */
 	public function sentence_count( $strText ) {
-		_deprecated_function( __METHOD__, 'WPSEO 3.0' );
+		_deprecated_function( 'Yoast_TextStatistics::sentence_count', 'WPSEO 3.0' );
 
 		return 0;
 	}
@@ -138,7 +136,7 @@ class Yoast_TextStatistics {
 	 * @return int
 	 */
 	public function word_count( $strText ) {
-		_deprecated_function( __METHOD__, 'WPSEO 3.0' );
+		_deprecated_function( 'Yoast_TextStatistics::word_count', 'WPSEO 3.0' );
 
 		return 0;
 	}
@@ -151,7 +149,7 @@ class Yoast_TextStatistics {
 	 * @return int|float
 	 */
 	public function average_words_per_sentence( $strText ) {
-		_deprecated_function( __METHOD__, 'WPSEO 3.0' );
+		_deprecated_function( 'Yoast_TextStatistics::average_words_per_sentence', 'WPSEO 3.0' );
 
 		return 0;
 	}
@@ -164,7 +162,7 @@ class Yoast_TextStatistics {
 	 * @return int|float
 	 */
 	public function average_syllables_per_word( $strText ) {
-		_deprecated_function( __METHOD__, 'WPSEO 3.0' );
+		_deprecated_function( 'Yoast_TextStatistics::average_syllables_per_word', 'WPSEO 3.0' );
 
 		return 0;
 	}
@@ -176,7 +174,7 @@ class Yoast_TextStatistics {
 	 * @return int
 	 */
 	public function syllable_count( $strWord ) {
-		_deprecated_function( __METHOD__, 'WPSEO 3.0' );
+		_deprecated_function( 'Yoast_TextStatistics::syllable_count', 'WPSEO 3.0' );
 
 		return 0;
 	}
@@ -191,7 +189,7 @@ class Yoast_TextStatistics {
 	 * @return    int|float
 	 */
 	public function normalize_score( $score, $min, $max, $dps = 1 ) {
-		_deprecated_function( __METHOD__, 'WPSEO 3.0' );
+		_deprecated_function( 'Yoast_TextStatistics::normalize_score', 'WPSEO 3.0' );
 
 		return 0;
 	}

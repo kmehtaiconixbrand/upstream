@@ -15,8 +15,7 @@ function wpcf7_l10n() {
 
 	$api = translations_api( 'plugins', array(
 		'slug' => 'contact-form-7',
-		'version' => WPCF7_VERSION,
-	) );
+		'version' => WPCF7_VERSION ) );
 
 	if ( is_wp_error( $api ) || empty( $api['translations'] ) ) {
 		return $l10n;
@@ -38,24 +37,14 @@ function wpcf7_is_valid_locale( $locale ) {
 }
 
 function wpcf7_is_rtl( $locale = '' ) {
-	static $rtl_locales = array(
-		'ar' => 'Arabic',
-		'ary' => 'Moroccan Arabic',
-		'azb' => 'South Azerbaijani',
-		'fa_IR' => 'Persian',
-		'haz' => 'Hazaragi',
-		'he_IL' => 'Hebrew',
-		'ps' => 'Pashto',
-		'ug_CN' => 'Uighur',
-	);
-
-	if ( empty( $locale ) && function_exists( 'is_rtl' ) ) {
-		return is_rtl();
-	}
-
 	if ( empty( $locale ) ) {
-		$locale = get_locale();
+		return function_exists( 'is_rtl' ) ? is_rtl() : false;
 	}
+
+	$rtl_locales = array(
+		'ar' => 'Arabic',
+		'he_IL' => 'Hebrew',
+		'fa_IR' => 'Persian' );
 
 	return isset( $rtl_locales[$locale] );
 }

@@ -1,5 +1,5 @@
 jQuery( document ).ready( function( $ ) { 
-var geocoder, map, directionsDisplay, directionsService, geolocationLatlng, autoCompleteLatLng,
+var geocoder, map, directionsDisplay, directionsService, geolocationLatlng,
 	activeWindowMarkerId, infoWindow, markerClusterer, startMarkerData, startAddress,
 	openInfoWindow = [],
 	markersArray = [],
@@ -54,13 +54,11 @@ if ( $( ".wpsl-gmap-canvas" ).length ) {
  * @returns {void}
  */
 function initializeGmap( mapId, mapIndex ) {
-    var mapOptions, settings, infoWindow, latLng,
-		bounds, mapData, maxZoom;
+    var mapOptions, settings, infoWindow, latLng, bounds, mapData, locationCount,
+		maxZoom = Number( wpslSettings.autoZoomLevel );
 
-	// Get the settings that belongs to the current map.
+	// Get the settings that belong to the map.
 	settings = getMapSettings( mapIndex );
-
-    maxZoom = Number( settings.zoomLevel );
 
 	// Create a new infoWindow, either with the infobox libray or use the default one.
 	infoWindow = newInfoWindow();
@@ -77,7 +75,6 @@ function initializeGmap( mapId, mapIndex ) {
 		mapTypeControl: Number( settings.mapTypeControl ) ? true : false,
 		scrollwheel: Number( settings.scrollWheel ) ? true : false,
 		streetViewControl: Number( settings.streetView ) ? true : false,
-        gestureHandling: settings.gestureHandling,
 		zoomControlOptions: {
 			position: google.maps.ControlPosition[ settings.controlPosition.toUpperCase() + '_TOP' ]
 		}
@@ -88,15 +85,19 @@ function initializeGmap( mapId, mapIndex ) {
 
 	map = new google.maps.Map( document.getElementById( mapId ), mapOptions );
 
+	// Do we need to disable the dragging of the map?
+	maybeDisableMapDrag( map );
+
 	// Check if we need to apply a map style.
 	maybeApplyMapStyle( settings.mapStyle );
 	
 	if ( ( typeof window[ "wpslMap_" + mapIndex ] !== "undefined" ) && ( typeof window[ "wpslMap_" + mapIndex ].locations !== "undefined" ) ) {
-		bounds	= new google.maps.LatLngBounds(),
-		mapData = window[ "wpslMap_" + mapIndex ].locations;
+		bounds		  = new google.maps.LatLngBounds(),
+		mapData       = window[ "wpslMap_" + mapIndex ].locations,
+		locationCount = mapData.length;
 
 		// Loop over the map data, create the infowindow object and add each marker.
-		$.each( mapData, function( index ) {
+		$.each( mapData, function( index ) {			
 			latLng = new google.maps.LatLng( mapData[index].lat, mapData[index].lng );
 			addMarker( latLng, mapData[index].id, mapData[index], false, infoWindow );
 			bounds.extend( latLng );
@@ -117,11 +118,7 @@ function initializeGmap( mapId, mapIndex ) {
 
 	// Only run this part if the store locator exist and we don't just have a basic map.
 	if ( $( "#wpsl-gmap" ).length ) {
-		
-		if ( wpslSettings.autoComplete == 1 ) {
-			activateAutocomplete();
-		}
-		
+
 		/* 
 		 * Not the most optimal solution, but we check the useragent if we should enable the styled dropdowns.
 		 * 
@@ -129,16 +126,11 @@ function initializeGmap( mapId, mapIndex ) {
 		 * iOS and Android devices. So on mobile devices the dropdowns will be styled according 
 		 * to the browser styles on that device.
 		 */
-		if ( !checkMobileUserAgent() && $( ".wpsl-dropdown" ).length && wpslSettings.enableStyledDropdowns == 1 ) {
+		if ( !checkMobileUserAgent() && $( ".wpsl-dropdown" ).length ) {
 			createDropdowns();	
 		} else {
-			$( "#wpsl-search-wrap select" ).show();
-			
-			if ( checkMobileUserAgent() ) {
-				$( "#wpsl-wrap" ).addClass( "wpsl-mobile" );
-			} else {
-				$( "#wpsl-wrap" ).addClass( "wpsl-default-filters" );
-			}
+			$( "#wpsl-search-wrap select").show();
+			$( "#wpsl-wrap" ).addClass( "wpsl-mobile" );
 		}
 
 		// Check if we need to autolocate the user, or autoload the store locations.
@@ -170,38 +162,6 @@ function initializeGmap( mapId, mapIndex ) {
 }
 
 /**
- * Activate the autocomplete for the store search.
- * 
- * @since 2.2.0
- * @link https://developers.google.com/maps/documentation/javascript/places-autocomplete
- * @returns {void}
- */
-function activateAutocomplete() {
-	var input, autocomplete, place,
-		options = {};
-
-	// Check if we need to set the geocode component restrictions.
-	if ( typeof wpslSettings.geocodeComponents !== "undefined" && !$.isEmptyObject( wpslSettings.geocodeComponents ) ) {
-		options.componentRestrictions = wpslSettings.geocodeComponents;
-	}
-
-	input		 = document.getElementById( "wpsl-search-input" );
-	autocomplete = new google.maps.places.Autocomplete( input, options );
-
-	autocomplete.addListener( "place_changed", function() {
-		place = autocomplete.getPlace();
-
-		/* 
-		 * Assign the returned latlng to the autoCompleteLatLng var. 
-		 * This var is used when the users submits the search.
-		 */
-		if ( place.geometry ) {
-			autoCompleteLatLng = place.geometry.location;
-		}
-	});	
-}
-
-/**
  * Make sure that the 'Zoom here' link in the info window 
  * doesn't zoom past the max auto zoom level.
  * 
@@ -211,6 +171,7 @@ function activateAutocomplete() {
  * @returns {void}
  */
 function zoomChangedListener() {
+
 	if ( typeof wpslSettings.markerZoomTo !== "undefined" && wpslSettings.markerZoomTo == 1 ) {
 		google.maps.event.addListener( map, "zoom_changed", function() {
 			checkMaxZoomLevel();
@@ -235,8 +196,7 @@ function getMapSettings( mapIndex ) {
 			mapStyle: wpslSettings.mapStyle,
 			streetView: wpslSettings.streetView,
 			scrollWheel: wpslSettings.scrollWheel,
-			controlPosition: wpslSettings.controlPosition,
-            gestureHandling: wpslSettings.gestureHandling
+			controlPosition: wpslSettings.controlPosition
 		};	
 
 	// If there are settings that are set through the shortcode, then we use them instead of the default ones.
@@ -283,8 +243,8 @@ function getStartLatlng( mapIndex ) {
 	 */	
 	if ( ( typeof firstLocation !== "undefined" && typeof firstLocation.lat !== "undefined" ) && ( typeof firstLocation.lng !== "undefined" ) ) {
 		startLatLng = new google.maps.LatLng( firstLocation.lat, firstLocation.lng );
-	} else if ( wpslSettings.startLatlng !== "" ) {
-		latLng		= wpslSettings.startLatlng.split( "," );
+	} else if ( wpslSettings.zoomLatlng !== "" ) {
+		latLng		= wpslSettings.zoomLatlng.split( "," );
 		startLatLng = new google.maps.LatLng( latLng[0], latLng[1] );
     } else {
 		startLatLng = new google.maps.LatLng( 0,0 );
@@ -333,6 +293,30 @@ function newInfoWindow() {
 }
 
 /**
+ * Check if we need to disable dragging on the map.
+ * 
+ * Disabling dragging fixes the problem on mobile devices where 
+ * users are scrolling down a page, but can't get past the map
+ * because the map itself is being dragged instead of the page.
+ * 
+ * @since  2.1.0
+ * @param  {object} map The map object.
+ * @return {void}
+ */
+function maybeDisableMapDrag( map ) {
+	var disableRes = parseInt( wpslSettings.draggable.disableRes ), 
+		mapOption  = {
+			draggable: Boolean( wpslSettings.draggable.enabled )
+		};
+
+	if ( disableRes !== "NaN" && mapOption.draggable ) {
+		mapOption.draggable = $( document ).width() > disableRes ? true : false;
+	}
+
+	map.setOptions( mapOption );
+}
+
+/**
  * Get the required marker settings.
  * 
  * @since  2.1.0
@@ -343,13 +327,9 @@ function getMarkerSettings() {
 		markerProps = wpslSettings.markerIconProps,
 		settings	= {};
 
-	// Use the correct marker path.
+	// If no custom marker path is provided, then we stick with the default one.
 	if ( typeof markerProps.url !== "undefined" ) {
-        settings.url = markerProps.url;
-    } else if ( typeof markerProps.categoryMarkerUrl !== "undefined" ) {
-        settings.categoryMarkerUrl = markerProps.categoryMarkerUrl;
-    } else if ( typeof markerProps.alternateMarkerUrl !== "undefined" ) {
-        settings.alternateMarkerUrl = markerProps.alternateMarkerUrl;
+		settings.url = markerProps.url;
 	} else {
 		settings.url = wpslSettings.url + "img/markers/";
 	}
@@ -473,7 +453,7 @@ function checkGeolocation( startLatLng, infoWindow ) {
 		navigator.geolocation.getCurrentPosition( function( position ) {
 			geolocationFinished( geolocationInProgress );
 			clearTimeout( locationTimeout );
-			
+
 			/* 
 			 * If the timeout is triggerd and the user later decides to enable 
 			 * the geolocation detection again, it gets messy with multiple start markers. 
@@ -482,17 +462,6 @@ function checkGeolocation( startLatLng, infoWindow ) {
 			 */
 			deleteOverlays( keepStartMarker ); 
 			handleGeolocationQuery( startLatLng, position, resetMap, infoWindow );
-			
-			/*
-			 * Workaround for this bug in Firefox https://bugzilla.mozilla.org/show_bug.cgi?id=1283563.
-			 * to keep track if the geolocation code has already run.
-			 * 
-			 * Otherwise after the users location is determined succesfully the code 
-			 * will also detect the returned error, and triggers showStores() to 
-			 * run with the start location set in the incorrect location.
-			 */ 
-			
-			$( ".wpsl-search").addClass( "wpsl-geolocation-run" );
 		}, function( error ) {
 
 			/* 
@@ -505,7 +474,7 @@ function checkGeolocation( startLatLng, infoWindow ) {
 			 * If an error occurs on pageload without the user clicking on the direction icon,
 			 * the default map is shown without any alert boxes.
 			 */
-			if ( $( ".wpsl-icon-direction" ).hasClass( "wpsl-user-activated" ) && !$( ".wpsl-search" ).hasClass( "wpsl-geolocation-run" ) ) {
+			if ( $( ".wpsl-icon-direction" ).hasClass( "wpsl-user-activated") ) {
 				switch ( error.code ) {
 					case error.PERMISSION_DENIED:
 						alert( wpslGeolocationErrors.denied );
@@ -522,7 +491,7 @@ function checkGeolocation( startLatLng, infoWindow ) {
 				}
 
 				$( ".wpsl-icon-direction" ).removeClass( "wpsl-active-icon" );
-			} else if ( !$( ".wpsl-search" ).hasClass( "wpsl-geolocation-run" ) ) {
+			} else {
 				clearTimeout( locationTimeout );
 				showStores( startLatLng, infoWindow );
 			}
@@ -565,7 +534,7 @@ function handleGeolocationQuery( startLatLng, position, resetMap, infoWindow ) {
 		showStores( startLatLng, infoWindow );
 	} else {
 		var latLng = new google.maps.LatLng( position.coords.latitude, position.coords.longitude );
-		
+
 		/* 
 		 * Store the latlng from the geolocation for when the user hits "reset" again 
 		 * without having to ask for permission again.
@@ -583,13 +552,11 @@ function handleGeolocationQuery( startLatLng, position, resetMap, infoWindow ) {
  * Handle clicks on the store locator search button.
  * 
  * @since	1.0.0
- * @todo disable button while AJAX request still runs.
  * @param	{object} infoWindow The infoWindow object
  * @returns {void}
  */
 function searchLocationBtn( infoWindow ) {
-	
-	$( "#wpsl-search-btn" ).unbind( "click" ).bind( "click", function( e ) {
+	$( "#wpsl-search-btn" ).on( "click", function() {
 		var keepStartMarker = false;
 
 		$( "#wpsl-search-input" ).removeClass();
@@ -601,28 +568,16 @@ function searchLocationBtn( infoWindow ) {
 			$( "#wpsl-stores" ).show();
 			$( ".wpsl-direction-before, .wpsl-direction-after" ).remove();
 			$( "#wpsl-direction-details" ).hide();
-
+			
 			resetMap = false;
 
 			// Force the open InfoBox info window to close.
 			closeInfoBoxWindow();
-
+			
 			deleteOverlays( keepStartMarker );
 			deleteStartMarker();
-
-			/*
-			 * Check if we need to geocode the user input, 
-			 * or if autocomplete is enabled and we already 
-			 * have the latlng values.
-			 */
-			if ( wpslSettings.autoComplete == 1 && typeof autoCompleteLatLng !== "undefined" ) {
-				prepareStoreSearch( autoCompleteLatLng, infoWindow );
-			} else {
-				codeAddress( infoWindow );
-			}
+			codeAddress( infoWindow );
 		}
-
-		return false;
 	});
 }
 
@@ -762,15 +717,14 @@ function deleteStartMarker() {
  * @returns {void}
  */
 function resetDropdowns() {
-	var i, arrayLength, dataValue, catText, $customDiv, $customFirstLi, customSelectedText, customSelectedData,
-		defaultFilters = $( "#wpsl-wrap" ).hasClass( "wpsl-default-filters" ),
-		defaultValues  = [wpslSettings.searchRadius + ' ' + wpslSettings.distanceUnit, wpslSettings.maxResults],
-		dropdowns	   = ["wpsl-radius", "wpsl-results"];
-
+	var i, arrayLength, dataValue, catText,
+		defaultValues = [wpslSettings.searchRadius + ' ' + wpslSettings.distanceUnit, wpslSettings.maxResults],
+		dropdowns = ["wpsl-radius", "wpsl-results"];
+	
 	for ( i = 0, arrayLength = dropdowns.length; i < arrayLength; i++ ) {
 		$( "#" + dropdowns[i] + " select" ).val( parseInt( defaultValues[i] ) );
 		$( "#" + dropdowns[i] + " li" ).removeClass();
-
+						
 		if ( dropdowns[i] == "wpsl-radius" ) {
 			dataValue = wpslSettings.searchRadius;
 		} else if ( dropdowns[i] == "wpsl-results" ) {
@@ -780,43 +734,24 @@ function resetDropdowns() {
 		$( "#" + dropdowns[i] + " li" ).each( function() {
 			if ( $( this ).text() === defaultValues[i] ) {
 				$( this ).addClass( "wpsl-selected-dropdown" );
-
+				
 				$( "#" + dropdowns[i] + " .wpsl-selected-item" ).html( defaultValues[i] ).attr( "data-value", dataValue );
 			}
 		});
 	}
-
+	
 	/** 
-	 * Reset the category dropdown.
+	 * Reset the category dropdown 
 	 * @todo look for other way to do this in combination with above code. Maybe allow users to define a default cat on the settings page?
 	 */
 	if ( $( "#wpsl-category" ).length ) {
 		$( "#wpsl-category select" ).val( 0 );
 		$( "#wpsl-category li" ).removeClass();
 		$( "#wpsl-category li:first-child" ).addClass( "wpsl-selected-dropdown" );
-
-		catText = $( "#wpsl-category li:first-child" ).text();
-
+		
+		catText = $( "#wpsl-category li:first-child").text();
+		
 		$( "#wpsl-category .wpsl-selected-item" ).html( catText ).attr( "data-value", 0 );
-	}
-
-	// If any custom dropdowns exist, then we reset them as well.
-	if ( $( ".wpsl-custom-dropdown" ).length > 0 ) {
-		$( ".wpsl-custom-dropdown" ).each( function( index ) {
-			
-			// Check if we are dealing with the styled dropdowns, or the default select dropdowns.
-			if ( !defaultFilters ) {
-				$customDiv		   = $( this ).siblings( "div" );
-				$customFirstLi	   = $customDiv.find( "li:first-child" );
-				customSelectedText = $customFirstLi.text();
-				customSelectedData = $customFirstLi.attr( "data-value" );
-
-				$customDiv.find( "li" ).removeClass();
-				$customDiv.prev().html( customSelectedText ).attr( "data-value", customSelectedData );	
-			} else {
-				$( this ).find( "option" ).removeAttr( "selected" );
-			}
-		});
 	}
 }
 
@@ -980,7 +915,7 @@ function calcRoute( start, end ) {
 	request = {
 		origin: start,
 		destination: end,
-		travelMode: wpslSettings.directionsTravelMode,
+		travelMode: google.maps.DirectionsTravelMode.DRIVING,
 		unitSystem: google.maps.UnitSystem[ distanceUnit ] 
 	};
 
@@ -1043,7 +978,9 @@ function calcRoute( start, end ) {
  * @returns {void}
  */
 function codeAddress( infoWindow ) {
-    var latLng,
+    var latLng, 
+		autoLoad = false,
+		keepStartMarker = false,
 		request = {
 			'address': $( "#wpsl-search-input" ).val()
 		};
@@ -1057,29 +994,16 @@ function codeAddress( infoWindow ) {
 		if ( status == google.maps.GeocoderStatus.OK ) {
 			latLng = response[0].geometry.location;
 
-			prepareStoreSearch( latLng, infoWindow );
+			// Remove any previous markers and add a new one.
+			deleteOverlays( keepStartMarker );
+			addMarker( latLng, 0, '', true, infoWindow ); // This marker is the 'start location' marker.
+
+			// Try to find stores that match the radius, location criteria.
+			findStoreLocations( latLng, resetMap, autoLoad, infoWindow );
 		} else {
 			geocodeErrors( status );
 		}
     });
-}
-
-/**
- * Prepare a new location search.
- * 
- * @since	2.2.0
- * @param	{object} latLng
- * @param	{object} infoWindow The infoWindow object.
- * @returns {void}
- */
-function prepareStoreSearch( latLng, infoWindow ) {
-	var autoLoad = false;
-	
-	// Add a new start marker.
-	addMarker( latLng, 0, '', true, infoWindow );
-
-	// Try to find stores that match the radius, location criteria.
-	findStoreLocations( latLng, resetMap, autoLoad, infoWindow );	
 }
 
 /**
@@ -1174,7 +1098,7 @@ function findFormattedAddress( latLng, callback ) {
 }
 
 /**
- * Make the AJAX request to load the store data.
+ * Make the Ajax request to load the store data.
  * 
  * @since	1.2.0
  * @param	{object}  startLatLng The latlng used as the starting point
@@ -1184,15 +1108,100 @@ function findFormattedAddress( latLng, callback ) {
  * @returns {void}
  */
 function makeAjaxRequest( startLatLng, resetMap, autoLoad, infoWindow ) {
-	var latLng, noResultsMsg,
-		ajaxData   = {},
+	var latLng, maxResult, radius,
 		storeData  = "",
+		categoryId = "",
 		draggable  = false,
+		isMobile   = $( "#wpsl-wrap" ).hasClass( "wpsl-mobile" ),
 		template   = $( "#wpsl-listing-template" ).html(),
 		$storeList = $( "#wpsl-stores ul" ),
-		preloader  = wpslSettings.url + "img/ajax-loader.gif";
-	
-	ajaxData = collectAjaxData( startLatLng, resetMap, autoLoad );
+		preloader  = wpslSettings.url + "img/ajax-loader.gif",
+		ajaxData   = {
+			action: "store_search",
+			lat: startLatLng.lat(),
+			lng: startLatLng.lng()
+		};
+
+	/* 
+	 * If we reset the map we use the default dropdown values instead of the selected values. 
+	 * Otherwise we first make sure the filter val is valid before including the radius / max_results param
+	 */
+	if ( resetMap ) {
+		ajaxData.max_results = wpslSettings.maxResults;
+		ajaxData.radius		 = wpslSettings.searchRadius;
+	} else {
+		if ( isMobile ) {
+			maxResult = parseInt( $( "#wpsl-results .wpsl-dropdown" ).val() );
+			radius 	  = parseInt( $( "#wpsl-radius .wpsl-dropdown" ).val() );
+		} else {
+			maxResult = parseInt( $( "#wpsl-results .wpsl-selected-item" ).attr( "data-value" ) );
+			radius    = parseInt( $( "#wpsl-radius .wpsl-selected-item" ).attr( "data-value" ) );
+		}
+		
+		// If the max resuls or radius filter values are NaN, then we use the default value.
+		if ( isNaN( maxResult ) ) {
+			ajaxData.max_results = wpslSettings.maxResults;
+		} else {
+			ajaxData.max_results = maxResult;
+		}
+		
+		if ( isNaN( radius ) ) {
+			ajaxData.radius = wpslSettings.searchRadius;
+		} else {
+			ajaxData.radius = radius;
+		}
+		
+		/* 
+		 * If category ids are set through the wpsl shortcode, then we always need to include them.
+		 * Otherwise check if the category dropdown exist, and if so get the id.
+		 */
+		if ( typeof wpslSettings.categoryIds !== "undefined" ) {
+			ajaxData.filter = wpslSettings.categoryIds;
+		} else if ( $( "#wpsl-category" ).length > 0 ) {
+			if ( isMobile ) {
+				categoryId = parseInt( $( "#wpsl-category .wpsl-dropdown" ).val() );
+			} else {
+				categoryId = parseInt( $( "#wpsl-category .wpsl-selected-item" ).attr( "data-value" ) );				
+			}
+
+			if ( ( !isNaN( categoryId ) && ( categoryId !== 0 ) ) )  {
+				ajaxData.filter = categoryId;
+			}
+		}
+
+		/* @TODO: Look into adding support for extra user defined dropdowns?
+		 * 
+		 * Create a check that will automatically include data from 
+		 * any additional dropdowns in the Ajax request. 
+		 */
+	}
+
+   /*
+	* If the autoload option is enabled, then we need to check if the included latlng 
+	* is based on a geolocation attempt before including the autoload param.
+	* 
+	* Because if both the geolocation and autoload options are enabled, 
+	* and the geolocation attempt was successfull, then we need to to include 
+	* the skip_cache param. 
+	* 
+	* This makes sure the results don't come from an older transient based on the 
+	* start location from the settings page, instead of the users actual location. 
+	*/
+    if ( autoLoad == 1 ) {
+		if ( typeof geolocationLatlng !== "undefined" ) {
+			ajaxData.skip_cache = 1;
+		} else {
+			ajaxData.autoload = 1;
+			
+			/* 
+			 * If the user set the 'category' attr on the wpsl shortcode, then include the cat ids 
+			 * to make sure only locations from the set categories are loaded on autoload.
+			 */
+			if ( typeof wpslSettings.categoryIds !== "undefined" ) {
+				ajaxData.filter = wpslSettings.categoryIds;
+			}
+		}
+	}
 
 	// Add the preloader.
 	$storeList.empty().append( "<li class='wpsl-preloader'><img src='" + preloader + "'/>" + wpslLabels.preloader + "</li>" );
@@ -1212,14 +1221,11 @@ function makeAjaxRequest( startLatLng, resetMap, autoLoad, infoWindow ) {
 				latLng = new google.maps.LatLng( response[index].lat, response[index].lng );	
 				addMarker( latLng, response[index].id, response[index], draggable, infoWindow );	
 
-				// Create the HTML output with help from underscore js.
+				// Create the html output with help from underscore js.
 				storeData = storeData + _.template( template )( response[index] );
 			});
 
 			$( "#wpsl-result-list" ).off( "click", ".wpsl-directions" );
-
-			// Remove the old search results.
-			$storeList.empty();
 
 			// Add the html for the store listing to the <ul>.
 			$storeList.append( storeData );
@@ -1237,25 +1243,13 @@ function makeAjaxRequest( startLatLng, resetMap, autoLoad, infoWindow ) {
 			// Do we need to create a marker cluster?
 			checkMarkerClusters();
 
+			// Make sure everything fits on the screen.
+			fitBounds();
+
 			$( "#wpsl-result-list p:empty" ).remove();				
 		} else {
-			addMarker( startLatLng, 0, '', true, infoWindow );
-			
-			noResultsMsg = getNoResultsMsg();
-			
-			$storeList.html( "<li class='no-results'>" + noResultsMsg + "</li>" );
+			$storeList.html( "<li class='no-results'>" + wpslLabels.noResults + "</li>" );
 		}
-		
-		/*
-		 * Do we need to adjust the zoom level so that all the markers fit in the viewport,
-		 * or just center the map on the start marker.
-		 */
-        if ( wpslSettings.runFitBounds == 1 ) {
-            fitBounds();
-		} else {
-            map.setZoom( Number( wpslSettings.zoomLevel ) );
-            map.setCenter( markersArray[0].position );
-        }
 		
 		/* 
 		 * Store the default zoom and latlng values the first time 
@@ -1298,214 +1292,16 @@ function makeAjaxRequest( startLatLng, resetMap, autoLoad, infoWindow ) {
 }
 
 /**
- * Collect the data we need to include in the AJAX request.
- * 
- * @since	2.2.0
- * @param	{object}  startLatLng The latlng used as the starting point
- * @param	{boolean} resetMap    Whether we should reset the map or not
- * @param	{string}  autoLoad    Check if we need to autoload all the stores
- * @returns {object}  ajaxData	  The collected data.
- */
-function collectAjaxData( startLatLng, resetMap, autoLoad ) {
-	var maxResult, radius, customDropdownName, customDropdownValue,
-        customCheckboxName, customCheckboxValue,
-		categoryId	   = "",
-		isMobile	   = $( "#wpsl-wrap" ).hasClass( "wpsl-mobile" ),
-		defaultFilters = $( "#wpsl-wrap" ).hasClass( "wpsl-default-filters" ),
-		ajaxData = {
-			action: "store_search",
-			lat: startLatLng.lat(),
-			lng: startLatLng.lng()
-		};
-	
-	/* 
-	 * If we reset the map we use the default dropdown values instead of the selected values. 
-	 * Otherwise we first make sure the filter val is valid before including the radius / max_results param
-	 */
-	if ( resetMap ) {
-		ajaxData.max_results   = wpslSettings.maxResults;
-		ajaxData.search_radius = wpslSettings.searchRadius;
-	} else {
-		if ( isMobile || defaultFilters ) {
-			maxResult = parseInt( $( "#wpsl-results .wpsl-dropdown" ).val() );
-			radius 	  = parseInt( $( "#wpsl-radius .wpsl-dropdown" ).val() );
-		} else {
-			maxResult = parseInt( $( "#wpsl-results .wpsl-selected-item" ).attr( "data-value" ) );
-			radius    = parseInt( $( "#wpsl-radius .wpsl-selected-item" ).attr( "data-value" ) );
-		}
-		
-		// If the max results or radius filter values are NaN, then we use the default value.
-		if ( isNaN( maxResult ) ) {
-			ajaxData.max_results = wpslSettings.maxResults;
-		} else {
-			ajaxData.max_results = maxResult;
-		}
-		
-		if ( isNaN( radius ) ) {
-			ajaxData.search_radius = wpslSettings.searchRadius;
-		} else {
-			ajaxData.search_radius = radius;
-		}
-		
-		/* 
-		 * If category ids are set through the wpsl shortcode, then we always need to include them.
-		 * Otherwise check if the category dropdown exist, or if the checkboxes are used.
-		 */
-		if ( typeof wpslSettings.categoryIds !== "undefined" ) {
-			ajaxData.filter = wpslSettings.categoryIds;
-		} else if ( $( "#wpsl-category" ).length > 0 ) {
-			if ( isMobile || defaultFilters ) {
-				categoryId = parseInt( $( "#wpsl-category .wpsl-dropdown" ).val() );
-			} else {
-				categoryId = parseInt( $( "#wpsl-category .wpsl-selected-item" ).attr( "data-value" ) );				
-			}
-
-			if ( ( !isNaN( categoryId ) && ( categoryId !== 0 ) ) )  {
-				ajaxData.filter = categoryId;
-			}
-		} else if ( $( "#wpsl-checkbox-filter" ).length > 0 ) {
-			if ( $( "#wpsl-checkbox-filter input:checked" ).length > 0 ) {
-				ajaxData.filter = getCheckboxIds();
-			}
-		}
-
-		// Include values from custom dropdowns.
-		if ( $( ".wpsl-custom-dropdown" ).length > 0 ) {
-			$( ".wpsl-custom-dropdown" ).each( function( index ) {
-				customDropdownName  = '';
-				customDropdownValue = '';
-
-				if ( isMobile || defaultFilters ) {
-					customDropdownName  = $( this ).attr( "name" );
-					customDropdownValue = $( this ).val();
-				} else {
-					customDropdownName  = $( this ).attr( "name" );
-					customDropdownValue = $( this ).next( ".wpsl-selected-item" ).attr( "data-value" );
-				}
-
-				if ( customDropdownName && customDropdownValue ) {
-					ajaxData[customDropdownName] = customDropdownValue;
-				}
-			});	
-		}
-
-		// Include values from custom checkboxes
-        if ( $( ".wpsl-custom-checkboxes" ).length > 0 ) {
-            $( ".wpsl-custom-checkboxes" ).each( function( index ) {
-				customCheckboxName = $( this ).attr( "data-name" );
-
-                if ( customCheckboxName ) {
-                    ajaxData[customCheckboxName] = getCustomCheckboxValue( customCheckboxName );
-                }
-			});
-        }
-	}
-
-   /*
-	* If the autoload option is enabled, then we need to check if the included latlng 
-	* is based on a geolocation attempt before including the autoload param.
-	* 
-	* Because if both the geolocation and autoload options are enabled, 
-	* and the geolocation attempt was successful, then we need to to include
-	* the skip_cache param. 
-	* 
-	* This makes sure the results don't come from an older transient based on the 
-	* start location from the settings page, instead of the users actual location. 
-	*/
-    if ( autoLoad == 1 ) {
-		if ( typeof geolocationLatlng !== "undefined" ) {
-			ajaxData.skip_cache = 1;
-		} else {
-			ajaxData.autoload = 1;
-			
-			/* 
-			 * If the user set the 'category' attr on the wpsl shortcode, then include the cat ids 
-			 * to make sure only locations from the set categories are loaded on autoload.
-			 */
-			if ( typeof wpslSettings.categoryIds !== "undefined" ) {
-				ajaxData.filter = wpslSettings.categoryIds;
-			}
-		}
-	}
-	
-	// If the collection of statistics is enabled, then we include the searched value.
-	if ( typeof wpslSettings.collectStatistics !== "undefined" && autoLoad == 0 ) {
-		ajaxData.search = $( "#wpsl-search-input" ).val();
-	}
-	
-	return ajaxData;
-}
-
-/**
- * Get custom checkbox values by data-name group.
- *
- * If multiple selection are made, then the returned
- * values are comma separated
- *
- * @since  2.2.8
- * @param  {string} customCheckboxName The data-name value of the custom checkbox
- * @return {string} customValue		   The collected checkbox values separated by a comma
- */
-function getCustomCheckboxValue( customCheckboxName ) {
-	var dataName    = $( "[data-name=" + customCheckboxName + "]" ),
-		customValue = [];
-
-	$( dataName ).find( "input:checked" ).each( function( index ) {
-        customValue.push( $( this ).val() );
-	});
-
-	return customValue.join();
-}
-
-/**
- * Check which no results msg we need to show. 
- * 
- * Either the default txt or a longer custom msg.
- * 
- * @since  2.2.0
- * @return string noResults The no results msg to show.
- */
-function getNoResultsMsg() {
-	var noResults;
-	
-	if ( typeof wpslSettings.noResults !== "undefined" && wpslSettings.noResults !== "" ) {
-		noResults = wpslSettings.noResults;
-	} else {
-		noResults = wpslLabels.noResults;
-	}
-	
-	return noResults;
-}
-
-/**
- * Collect the ids of the checked checkboxes.
- * 
- * @since  2.2.0
- * @return string catIds The cat ids from the checkboxes.
- */
-function getCheckboxIds() {
-	var catIds = $( "#wpsl-checkbox-filter input:checked" ).map( function() {
-		return $( this ).val();
-	});
-	
-	catIds = catIds.get();
-	catIds = catIds.join(',');
-	
-	return catIds;
-}
-
-/**
  * Check if cluster markers are enabled.
  * If so, init the marker clustering with the 
  * correct gridsize and max zoom.
  * 
- * @since  1.2.20
+ * @since 1.2.20
  * @return {void}
  */
 function checkMarkerClusters() {
 	if ( wpslSettings.markerClusters == 1 ) {
-		var markers, markersArrayNoStart,
-			clusterZoom = Number( wpslSettings.clusterZoom ),
+		var clusterZoom = Number( wpslSettings.clusterZoom ),
 			clusterSize = Number( wpslSettings.clusterSize );
 
 		if ( isNaN( clusterZoom ) ) {
@@ -1516,18 +1312,7 @@ function checkMarkerClusters() {
 			clusterSize = "";
 		}
 
-        /*
-         * Remove the start location marker from the cluster so the location
-         * count represents the actual returned locations, and not +1 for the start location.
-         */
-		if ( typeof wpslSettings.excludeStartFromCluster !== "undefined" && wpslSettings.excludeStartFromCluster == 1 ) {
-            markersArrayNoStart = markersArray.slice( 0 );
-            markersArrayNoStart.splice( 0,1 );
-        }
-
-        markers = ( typeof markersArrayNoStart === "undefined" ) ? markersArray : markersArrayNoStart;
-
-        markerClusterer = new MarkerClusterer( map, markers, {
+		markerClusterer = new MarkerClusterer( map, markersArray, {
 			gridSize: clusterSize,
 			maxZoom: clusterZoom
 		});
@@ -1549,16 +1334,12 @@ function addMarker( latLng, storeId, infoWindowData, draggable, infoWindow ) {
 	var url, mapIcon, marker,
 		keepStartMarker = true;
 
-    if ( storeId === 0 ) {
-        infoWindowData = {
-            store: wpslLabels.startPoint
-        };
+	if ( storeId === 0 ) {
+		infoWindowData = {
+			store: wpslLabels.startPoint
+		};
 
-        url = markerSettings.url + wpslSettings.startMarker;
-    } else if ( typeof infoWindowData.alternateMarkerUrl !== "undefined" && infoWindowData.alternateMarkerUrl ) {
-		url = infoWindowData.alternateMarkerUrl;
-	} else if ( typeof infoWindowData.categoryMarkerUrl !== "undefined" && infoWindowData.categoryMarkerUrl ) {
-		url = infoWindowData.categoryMarkerUrl;
+		url = markerSettings.url + wpslSettings.startMarker;
 	} else {
 		url = markerSettings.url + wpslSettings.storeMarker;
 	}
@@ -2104,6 +1885,15 @@ function directionErrors( status ) {
     alert( msg );	
 }
 
+// Trigger the search when the user presses "enter" on the keyboard.
+$( "#wpsl-search-input" ).keydown( function ( event ) {
+    var keypressed = event.keyCode || event.which;
+	
+    if ( keypressed == 13 ) {
+		$( "#wpsl-search-btn" ).trigger( "click" );
+    }
+});
+
 $( "#wpsl-stores" ).on( "click", ".wpsl-store-details", function() {	
 	var i, len,
 		$parentLi = $( this ).parents( "li" ),
@@ -2140,7 +1930,7 @@ $( "#wpsl-stores" ).on( "click", ".wpsl-store-details", function() {
 });
 
 /**
- * Create the styled dropdown filters.
+ * Create the dropdown filters.
  * 
  * Inspired by https://github.com/patrickkunka/easydropdown
  * 
@@ -2148,7 +1938,6 @@ $( "#wpsl-stores" ).on( "click", ".wpsl-store-details", function() {
  * @returns {void}
  */
 function createDropdowns() {
-	var maxDropdownHeight = Number( wpslSettings.maxDropdownHeight );
 		
 	$( ".wpsl-dropdown" ).each( function( index ) {
 		var	active, maxHeight, $this = $( this );
@@ -2173,43 +1962,30 @@ function createDropdowns() {
 			$this.$dropdown.append( "<li data-value=" + $( this ).val() + " " + active + ">" + $( this ).text() + "</li>" );
 		});	
 		
+		
 		$this.$dropdownElem.before( "<span data-value=" + $this.find( ":selected" ).val() + " class='wpsl-selected-item'>" + $this.find( ":selected" ).text() + "</span>" );
 		$this.$dropdownItem = $this.$dropdownElem.find( "li" );
 		
 		// Listen for clicks on the 'wpsl-dropdown' div.
 		$this.$dropdownWrap.on( "click", function( e ) {
-
-			// Check if we only need to close the current open dropdown.
-			if ( $( this ).hasClass( "wpsl-active" ) ) {
-				$( this ).removeClass( "wpsl-active" );
-
-				return;
-			}
-
-			closeAllDropdowns();
-
+			closeDropdowns();
+			
 			$( this ).toggleClass( "wpsl-active" );
 			maxHeight = 0;
-
+			
 			// Either calculate the correct height for the <ul>, or set it to 0 to hide it.
 			if ( $( this ).hasClass( "wpsl-active" ) ) {
 				$this.$dropdownItem.each( function( index ) {
 					maxHeight += $( this ).outerHeight();
 				});
-
+				
 				$this.$dropdownElem.css( "height", maxHeight + 2 + "px" );
 			} else {
 				$this.$dropdownElem.css( "height", 0 );
 			}
-
-			// Check if we need to enable the scrollbar in the dropdown filter.
-			if ( maxHeight > maxDropdownHeight ) {
-				$( this ).addClass( "wpsl-scroll-required" );
-				$this.$dropdownElem.css( "height", ( maxDropdownHeight ) + "px" );
-			}
-
+		
 			e.stopPropagation();
-		});
+		});	
 		
 		// Listen for clicks on the individual dropdown items.
 		$this.$dropdownItem.on( "click", function( e ) {
@@ -2221,14 +1997,14 @@ function createDropdowns() {
 			$this.$dropdownItem.removeClass( "wpsl-selected-dropdown" );
 			$( this ).addClass( "wpsl-selected-dropdown" );
 			
-			closeAllDropdowns();
+			closeDropdowns();
 			
 			e.stopPropagation();
 		});
 	});	
 	
 	$( document ).click( function() {
-		closeAllDropdowns();
+		closeDropdowns();
 	});
 }
 
@@ -2238,7 +2014,7 @@ function createDropdowns() {
  * @since	1.2.24
  * @returns {void}
  */
-function closeAllDropdowns() {
+function closeDropdowns() {
 	$( ".wpsl-dropdown" ).removeClass( "wpsl-active" );
 	$( ".wpsl-dropdown div" ).css( "height", 0 );	
 }
@@ -2263,8 +2039,7 @@ function closeAllDropdowns() {
  */
 if ( $( "a[href='#" + wpslSettings.mapTabAnchor + "']" ).length ) {
 	var mapZoom, mapCenter,
-		returnBool = Number( wpslSettings.mapTabAnchorReturn ) ? true : false,
-		$wpsl_tab  = $( "a[href='#" + wpslSettings.mapTabAnchor + "']" );
+		$wpsl_tab = $( "a[href='#" + wpslSettings.mapTabAnchor + "']" );
 
 	$wpsl_tab.on( "click", function() {
 		setTimeout( function() {
@@ -2279,7 +2054,7 @@ if ( $( "a[href='#" + wpslSettings.mapTabAnchor + "']" ).length ) {
 			fitBounds();
 		}, 50 );
 
-		return returnBool;
+		return false;
 	});
 }
 

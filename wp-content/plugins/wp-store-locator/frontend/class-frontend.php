@@ -58,10 +58,10 @@ if ( !class_exists( 'WPSL_Frontend' ) ) {
             
             add_filter( 'the_content',                 array( $this, 'cpt_template' ) );
             
-            add_shortcode( 'wpsl',                 array( $this, 'show_store_locator' ) );
-            add_shortcode( 'wpsl_address',         array( $this, 'show_store_address' ) );
-            add_shortcode( 'wpsl_hours',           array( $this, 'show_opening_hours' ) );
-            add_shortcode( 'wpsl_map',             array( $this, 'show_store_map' ) );
+            add_shortcode( 'wpsl',                     array( $this, 'show_store_locator' ) );
+            add_shortcode( 'wpsl_address',             array( $this, 'show_store_address' ) );
+            add_shortcode( 'wpsl_hours',               array( $this, 'show_opening_hours' ) );
+            add_shortcode( 'wpsl_map',                 array( $this, 'show_store_map' ) );
 		}
         
         /**
@@ -96,7 +96,7 @@ if ( !class_exists( 'WPSL_Frontend' ) ) {
              */
             if ( $wpsl_settings['autoload'] && isset( $_GET['autoload'] ) && $_GET['autoload'] && !$wpsl_settings['debug'] && !isset( $_GET['skip_cache'] ) ) {
                 $transient_name = $this->create_transient_name();
-
+                                
                 if ( false === ( $store_data = get_transient( 'wpsl_autoload_' . $transient_name ) ) ) {
                     $store_data = $this->find_nearby_locations();
                     
@@ -107,8 +107,6 @@ if ( !class_exists( 'WPSL_Frontend' ) ) {
             } else {
                 $store_data = $this->find_nearby_locations();
             }
-            
-            do_action( 'wpsl_store_search' );
             
             wp_send_json( $store_data );
             
@@ -125,17 +123,13 @@ if ( !class_exists( 'WPSL_Frontend' ) ) {
 
             global $wpsl, $wpsl_settings;
 
-            $name_section = array();
-
             // Include the set autoload limit.
-            if ( $wpsl_settings['autoload'] && $wpsl_settings['autoload_limit'] ) {
-                $name_section[] = absint( $wpsl_settings['autoload_limit'] );
-            }
+            $name_section = array( $wpsl_settings['autoload_limit'] );
 
-            /*
+            /* 
              * Check if we need to include the cat id(s) in the transient name.
-             *
-             * This can only happen if the user used the
+             * 
+             * This can only happen if the user used the 
              * 'category' attr on the wpsl shortcode.
              */
             if ( isset( $_GET['filter'] ) && $_GET['filter'] ) {
@@ -160,21 +154,10 @@ if ( !class_exists( 'WPSL_Frontend' ) ) {
             $lang_code = $wpsl->i18n->check_multilingual_code();
 
             if ( $lang_code ) {
-                $name_section[] = $lang_code;
-            }
+                $name_section[] = $lang_code;      
+            }              
 
             $transient_name = implode( '_', $name_section );
-
-            /*
-             * If the distance unit filter ( wpsl_distance_unit ) is used to change the km / mi unit based on
-             * the location of the IP, then we include the km / mi in the transient name. This is done to
-             * prevent users from seeing the wrong distances from the cached data.
-             *
-             * This way one data set can include the distance in km, and the other one the distance in miles.
-             */
-            if ( has_filter( 'wpsl_distance_unit' ) ) {
-                $transient_name = $transient_name . '_' . wpsl_get_distance_unit();
-            }
 
             return $transient_name;
         }
@@ -199,7 +182,7 @@ if ( !class_exists( 'WPSL_Frontend' ) ) {
              * Set the correct earth radius in either km or miles. 
              * We need this to calculate the distance between two coordinates. 
              */
-            $radius = ( wpsl_get_distance_unit() == 'km' ) ? 6371 : 3959;
+            $radius = ( $wpsl_settings['distance_unit'] == 'km' ) ? 6371 : 3959; 
 
             // The placeholder values for the prepared statement in the sql query.
             $placeholder_values = array(
@@ -251,12 +234,12 @@ if ( !class_exists( 'WPSL_Frontend' ) ) {
 
                 $sql_sort = 'ORDER BY distance '. $limit;
             } else {
-                array_push( $placeholder_values, $this->check_store_filter( 'search_radius' ), $this->check_store_filter( 'max_results' ) );
+                array_push( $placeholder_values, $this->check_store_filter( 'radius' ), $this->check_store_filter( 'max_results' ) );
                 $sql_sort = 'HAVING distance < %d ORDER BY distance LIMIT 0, %d';
             }
 
             $placeholder_values = apply_filters( 'wpsl_sql_placeholder_values', $placeholder_values );
-
+            
             /* 
              * The sql that will check which store locations fall within 
              * the selected radius based on the lat and lng values. 
@@ -279,8 +262,6 @@ if ( !class_exists( 'WPSL_Frontend' ) ) {
 
             if ( $stores ) {
                 $store_data = apply_filters( 'wpsl_store_data', $this->get_store_meta_data( $stores ) );
-            } else {
-                $store_data = apply_filters( 'wpsl_no_results_sql', '' );
             }
 
             return $store_data;
@@ -297,8 +278,9 @@ if ( !class_exists( 'WPSL_Frontend' ) ) {
             
             global $wpsl_settings, $wpsl;
             
-            $all_stores = array();
-                        
+            $all_stores           = array();
+            $include_post_content = apply_filters( 'wpsl_include_post_content', false );
+     
             // Get the list of store fields that we need to filter out of the post meta data.
             $meta_field_map = $this->frontend_meta_fields();
             
@@ -320,7 +302,7 @@ if ( !class_exists( 'WPSL_Frontend' ) ) {
 
                     if ( isset( $custom_fields[$meta_key][0] ) ) {
                         if ( ( isset( $meta_value['type'] ) ) && ( !empty( $meta_value['type'] ) ) ) {
-                            $meta_type = $meta_value['type'];                                
+                            $meta_type = $meta_value['type'];
                         } else {
                             $meta_type = '';
                         }
@@ -342,7 +324,7 @@ if ( !class_exists( 'WPSL_Frontend' ) ) {
                                 $meta_data = esc_url( $custom_fields[$meta_key][0] );
                                 break;
                             case 'hours':
-                                $meta_data = $this->get_opening_hours( $custom_fields[$meta_key][0], apply_filters( 'wpsl_hide_closed_hours', false ) );
+                                $meta_data = $this->get_opening_hours( $custom_fields[$meta_key][0], $hide_closed = false );
                                 break;
                             case 'wp_editor':
                             case 'textarea':
@@ -363,7 +345,7 @@ if ( !class_exists( 'WPSL_Frontend' ) ) {
                      * Include the post content if the "More info" option is enabled on the settings page,
                      * or if $include_post_content is set to true through the 'wpsl_include_post_content' filter.
                      */
-                    if ( ( $wpsl_settings['more_info'] && $wpsl_settings['more_info_location'] == 'store listings' ) || apply_filters( 'wpsl_include_post_content', false ) ) {
+                    if ( ( $wpsl_settings['more_info'] && $wpsl_settings['more_info_location'] == 'store listings' ) || $include_post_content ) {
                         $page_object               = get_post( $store->ID );
                         $store_meta['description'] = apply_filters( 'the_content', strip_shortcodes( $page_object->post_content ) );
                     }
@@ -620,7 +602,7 @@ if ( !class_exists( 'WPSL_Frontend' ) ) {
                 }
 
                 if ( $term_ids ) {
-                    $this->sl_shortcode_atts['js']['categoryIds'] = implode( ',', $term_ids );
+                    $this->sl_shortcode_atts['categoryIds'] = implode( ',', $term_ids );
                 }
             }
             
@@ -639,21 +621,23 @@ if ( !class_exists( 'WPSL_Frontend' ) ) {
                  * or if a transient with the start latlng already exists.
                  */
                 if ( false === ( $start_latlng = get_transient( $transient_name ) ) ) {
-                    $start_latlng = wpsl_get_address_latlng( $atts['start_location'] );
-                    set_transient( $transient_name, $start_latlng, 0 );
+                    $response = wpsl_call_geocode_api( $atts['start_location'] );
+                    
+                    if ( !is_wp_error( $response ) ) {
+                        $response = json_decode( $response['body'], true );
+
+                        if ( $response['status'] == 'OK' ) {
+                            $start_latlng = $response['results'][0]['geometry']['location']['lat'] . ',' . $response['results'][0]['geometry']['location']['lng'];    
+                        
+                            set_transient( $transient_name, $start_latlng, 0 );
+                        }
+                    }
                 }
 
                 if ( isset( $start_latlng ) && $start_latlng ) {
-                    $this->sl_shortcode_atts['js']['startLatlng'] = $start_latlng;
+                    // @todo change the name of zoomLatLng into something that makes more sense like startLatLng in the JS / settings code!
+                    $this->sl_shortcode_atts['zoomLatlng'] = $start_latlng;
                 }
-            }
-            
-            if ( isset( $atts['category_filter_type'] ) && in_array( $atts['category_filter_type'], array( 'dropdown', 'checkboxes' ) ) ) {              
-                $this->sl_shortcode_atts['category_filter_type'] = $atts['category_filter_type'];
-            }
-                        
-            if ( isset( $atts['checkbox_columns'] ) && is_numeric( $atts['checkbox_columns'] ) ) {
-                $this->sl_shortcode_atts['checkbox_columns'] = $atts['checkbox_columns'];
             }
         }
         
@@ -669,11 +653,9 @@ if ( !class_exists( 'WPSL_Frontend' ) ) {
             global $wpsl_settings;
             
             $atts = shortcode_atts( array(
-                'template'             => $wpsl_settings['template_id'],
-                'category'             => '',
-                'category_filter_type' => '',
-                'start_location'       => '',
-                'checkbox_columns'     => '3'
+                'template'       => $wpsl_settings['template_id'],
+                'category'       => '',
+                'start_location' => ''
             ), $atts );
 
             $this->check_sl_shortcode_atts( $atts );
@@ -714,7 +696,7 @@ if ( !class_exists( 'WPSL_Frontend' ) ) {
             
             global $post, $wpsl_settings, $wpsl;
             
-            $atts = wpsl_bool_check( shortcode_atts( apply_filters( 'wpsl_address_shortcode_defaults', array(
+            $atts = $this->bool_check( shortcode_atts( apply_filters( 'wpsl_address_shortcode_defaults', array(
                 'id'       => '',
                 'name'     => true,
                 'address'  => true,
@@ -836,11 +818,9 @@ if ( !class_exists( 'WPSL_Frontend' ) ) {
             
             global $post;
             
-            $hide_closed = apply_filters( 'wpsl_hide_closed_hours', false );
-            
-            $atts = wpsl_bool_check( shortcode_atts( apply_filters( 'wpsl_hour_shortcode_defaults', array(
+            $atts = $this->bool_check( shortcode_atts( apply_filters( 'wpsl_hour_shortcode_defaults', array(
                 'id'          => '',
-                'hide_closed' => $hide_closed
+                'hide_closed' => false
             ) ), $atts ) );
             
             if ( get_post_type() == 'wpsl_stores' ) {
@@ -863,7 +843,28 @@ if ( !class_exists( 'WPSL_Frontend' ) ) {
                 return $output;
             } 
         }
+        
+        /**
+         * Make sure the shortcode attributes are booleans 
+         * when they are expected to be.
+         *
+         * @since 2.0.4
+         * @param  array $atts Shortcode attributes
+         * @return array $atts Shortcode attributes
+         */
+        public function bool_check( $atts ) {
 
+            foreach ( $atts as $key => $val ) {
+                if ( in_array( $val, array( 'true', '1', 'yes', 'on' ) ) ) {
+                    $atts[$key] = true;
+                } else if ( in_array( $val, array( 'false', '0', 'no', 'off' ) ) ) {
+                    $atts[$key] = false;
+                }
+            }
+
+            return $atts;
+        }  
+        
         /**
          * Handle the [wpsl_map] shortcode.
          * 
@@ -942,7 +943,7 @@ if ( !class_exists( 'WPSL_Frontend' ) ) {
             foreach ( $store_ids as $store_id ) {
                 $lat = get_post_meta( $store_id, 'wpsl_lat', true );
                 $lng = get_post_meta( $store_id, 'wpsl_lng', true );
-         
+                                
                 // Make sure the latlng is numeric before collecting the other meta data.
                 if ( is_numeric( $lat ) && is_numeric( $lng ) ) {
                     $store_meta[$i] = apply_filters( 'wpsl_cpt_info_window_meta_fields', array(
@@ -1079,41 +1080,17 @@ if ( !class_exists( 'WPSL_Frontend' ) ) {
          * Make sure the filter contains a valid value, otherwise use the default value.
          * 
          * @since 2.0.0
-         * @param  string $filter       The name of the filter
          * @return string $filter_value The filter value
          */
         public function check_store_filter( $filter ) {
-
-            if ( isset( $_GET[$filter] ) && absint( $_GET[$filter] ) && $this->check_allowed_filter_value( $filter ) ) {
+            
+            if ( isset( $_GET[$filter] ) && absint( $_GET[$filter] ) ) {
                 $filter_value = $_GET[$filter];
             } else {
                 $filter_value = $this->get_default_filter_value( $filter );
-            }
-
+            }    
+            
             return $filter_value;
-        }
-
-        /**
-         * Make sure the used filter value isn't bigger
-         * then the value that's set on the settings page.
-         *
-         * @since 2.2.9
-         * @param  string $filter  The name of the filter
-         * @return bool   $allowed True if the value is equal or smaller then the value from the settings page
-         */
-        public function check_allowed_filter_value( $filter ) {
-
-            global $wpsl_settings;
-
-            $allowed = false;
-
-            $max_filter_val = max( explode(',', str_replace( array( '[',']' ), '', $wpsl_settings[$filter] ) ) );
-
-            if ( (int) $_GET[$filter] <= (int) $max_filter_val ) {
-                $allowed = true;
-            }
-
-            return $allowed;
         }
                 
         /**
@@ -1123,22 +1100,22 @@ if ( !class_exists( 'WPSL_Frontend' ) ) {
          * @param  string $type     The request list type
          * @return string $response The default list value
          */
-        public function get_default_filter_value( $type ) {
+       public function get_default_filter_value( $type ) {
 
-            $settings    = get_option( 'wpsl_settings' );
-            $list_values = explode( ',', $settings[$type] );
+           $settings    = get_option( 'wpsl_settings' );
+           $list_values = explode( ',', $settings[$type] );
 
-            foreach ( $list_values as $k => $list_value ) {
+           foreach ( $list_values as $k => $list_value ) {
 
-                // The default radius has a [] wrapped around it, so we check for that and filter out the [].
-                if ( strpos( $list_value, '[' ) !== false ) {
+               // The default radius has a [] wrapped around it, so we check for that and filter out the [].
+               if ( strpos( $list_value, '[' ) !== false ) {
                    $response = filter_var( $list_value, FILTER_SANITIZE_NUMBER_INT );
                    break;
-                }
-            }
+               }
+           }	
 
-            return $response;
-        }
+           return $response;		
+       }
         
         /**
          * Check if we have a opening day that has an value, if not they are all set to closed.
@@ -1185,7 +1162,7 @@ if ( !class_exists( 'WPSL_Frontend' ) ) {
              * If the category dropdowns are enabled then we make it 
              * the same width as the search input field. 
              */
-            if ( $wpsl_settings['category_filter'] && $wpsl_settings['category_filter_type'] == 'dropdown' || isset( $this->sl_shortcode_atts['category_filter_type'] ) && $this->sl_shortcode_atts['category_filter_type'] == 'dropdown' ) {
+            if ( $wpsl_settings['category_dropdown'] ) {
                 $cat_elem = ',#wpsl-category .wpsl-dropdown';
             } else {
                 $cat_elem = '';
@@ -1211,21 +1188,17 @@ if ( !class_exists( 'WPSL_Frontend' ) ) {
             
             $classes = array();
 
-            if ( $wpsl_settings['category_filter'] && $wpsl_settings['results_dropdown'] && !$wpsl_settings['radius_dropdown'] ) {
+            if ( $wpsl_settings['category_dropdown'] && $wpsl_settings['results_dropdown'] && !$wpsl_settings['radius_dropdown'] ) {
                 $classes[] = 'wpsl-cat-results-filter';
-            } else if ( $wpsl_settings['category_filter'] && ( $wpsl_settings['results_dropdown'] || $wpsl_settings['radius_dropdown'] ) ) {
+            } else if ( $wpsl_settings['category_dropdown'] && ( $wpsl_settings['results_dropdown'] || $wpsl_settings['radius_dropdown'] ) ) {
                 $classes[] = 'wpsl-filter';
             }
-            // checkboxes class toevoegen?
-            if ( !$wpsl_settings['category_filter'] && !$wpsl_settings['results_dropdown'] && !$wpsl_settings['radius_dropdown'] ) {
+            
+            if ( !$wpsl_settings['category_dropdown'] && !$wpsl_settings['results_dropdown'] && !$wpsl_settings['radius_dropdown'] ) {
                 $classes[] = 'wpsl-no-filters';
             }
             
-            if ( $wpsl_settings['category_filter'] && $wpsl_settings['category_filter_type'] == 'checkboxes' ) {
-                $classes[] = 'wpsl-checkboxes-enabled';
-            }
-            
-            if ( $wpsl_settings['results_dropdown'] && !$wpsl_settings['category_filter'] && !$wpsl_settings['radius_dropdown'] ) {
+            if ( $wpsl_settings['results_dropdown'] && !$wpsl_settings['category_dropdown'] && !$wpsl_settings['radius_dropdown'] ) {
                 $classes[] = 'wpsl-results-only';
             }
             
@@ -1237,8 +1210,8 @@ if ( !class_exists( 'WPSL_Frontend' ) ) {
         }
         
         /**
-         * Create a dropdown list holding the search radius or
-         * max search results options.
+         * Collect all the attributes (language, key, region) 
+         * we need before making a request to the Google Maps API.
          *
          * @since 1.0.0
          * @param  string $list_type     The name of the list we need to load data for
@@ -1253,7 +1226,7 @@ if ( !class_exists( 'WPSL_Frontend' ) ) {
             
             // Only show the distance unit if we are dealing with the search radius.
             if ( $list_type == 'search_radius' ) {
-                $distance_unit = ' '. esc_attr( wpsl_get_distance_unit() );
+                $distance_unit = ' '. esc_attr( $wpsl_settings['distance_unit'] );
             } else {
                 $distance_unit = '';
             }
@@ -1277,84 +1250,35 @@ if ( !class_exists( 'WPSL_Frontend' ) ) {
         /**
          * Create the category filter. 
          *
-         * @todo create another func that accepts a meta key param to generate 
-         * a dropdown with unique values. So for example create_filter( 'restaurant' ) will output a 
-         * filter with all restaurant types. This can be used in a custom theme template.
-         * 
          * @since 2.0.0
          * @return string|void $category The HTML for the category dropdown, or nothing if no terms exist.
          */
         public function create_category_filter() {
 
-            global $wpsl, $wpsl_settings;
+            global $wpsl;
 
             /*
              * If the category attr is set on the wpsl shortcode, then
              * there is no need to ouput an extra category dropdown.
              */
-            if ( isset( $this->sl_shortcode_atts['js']['categoryIds'] ) ) {
+            if ( isset( $this->sl_shortcode_atts['categoryIds'] ) ) {
                 return;
             }
 
             $terms = get_terms( 'wpsl_store_category' );
 
             if ( count( $terms ) > 0 ) {
+                $category = '<div id="wpsl-category">' . "\r\n";
+                $category .= '<label for="wpsl-category-list">' . esc_html( $wpsl->i18n->get_translation( 'category_label', __( 'Category', 'wpsl' ) ) ) . '</label>' . "\r\n";
+                $category .= '<select autocomplete="off" name="wpsl-category" id="wpsl-category-list" class="wpsl-dropdown">';
+                $category .= '<option value="0">'. __( 'Any' , 'wpsl' ) .'</option>';
 
-                // Either use the shortcode atts filter type or the one from the settings page.
-                if ( isset( $this->sl_shortcode_atts['category_filter_type'] ) ) {
-                    $filter_type = $this->sl_shortcode_atts['category_filter_type'];               
-                } else {
-                    $filter_type = $wpsl_settings['category_filter_type'];
+                foreach ( $terms as $term ) {
+                    $category .= '<option value="' . $term->term_id . '" '. $this->set_selected_category( $term->term_id ) .'>' . $term->name . '</option>';
                 }
 
-                // Check if we need to show the filter as checkboxes or a dropdown list
-                if ( $filter_type == 'checkboxes' ) {
-                    if ( isset( $this->sl_shortcode_atts['checkbox_columns'] ) ) {
-                        $checkbox_columns = absint( $this->sl_shortcode_atts['checkbox_columns'] );
-                    }
-
-                    if ( isset( $checkbox_columns ) && $checkbox_columns ) {
-                        $column_count = $checkbox_columns;                        
-                    } else {
-                        $column_count = 3;
-                    }
-
-                    $category = '<ul id="wpsl-checkbox-filter" class="wpsl-checkbox-' . $column_count . '-columns">';
-
-                    foreach ( $terms as $term ) {
-                        $category .= '<li>';
-                        $category .= '<label>';
-                        $category .= '<input type="checkbox" value="' . esc_attr( $term->term_id ) . '" ' . $this->set_selected_category( $filter_type, $term->term_id ) . ' />';
-                        $category .= esc_html( $term->name );
-                        $category .= '</label>';
-                        $category .= '</li>';
-                    }
-
-                    $category .= '</ul>';    
-                } else {
-                    $category = '<div id="wpsl-category">' . "\r\n";
-                    $category .= '<label for="wpsl-category-list">' . esc_html( $wpsl->i18n->get_translation( 'category_label', __( 'Category', 'wpsl' ) ) ) . '</label>' . "\r\n";
-
-                    $args = apply_filters( 'wpsl_dropdown_category_args', array(
-                            'show_option_none'  => $wpsl->i18n->get_translation( 'category_default_label', __( 'Any', 'wpsl' ) ),
-                            'option_none_value' => '0',
-                            'orderby'           => 'NAME', 
-                            'order'             => 'ASC',
-                            'echo'              => 0,
-                            'selected'          => $this->set_selected_category( $filter_type ),
-                            'hierarchical'      => 1, 
-                            'name'              => 'wpsl-category',
-                            'id'                => 'wpsl-category-list',
-                            'class'             => 'wpsl-dropdown',
-                            'taxonomy'          => 'wpsl_store_category',
-                            'hide_if_empty'     => true
-                        )
-                    );
-
-                    $category .= wp_dropdown_categories( $args );
-
-                    $category .= '</div>' . "\r\n";
-                }
+                $category .= '</select>';
+                $category .= '</div>' . "\r\n";
 
                 return $category;
             } 
@@ -1364,24 +1288,16 @@ if ( !class_exists( 'WPSL_Frontend' ) ) {
          * Set the selected category item.
          *
          * @since 2.1.2
-         * @todo maybe add support in the future to make it check a query string for set cat?
-         * @return string|void $category The ID of the selected option.
+         * @todo add support to make it check a query string for set cat
+         * @param integer The term id.
+         * @return string|void $category The 'selected' attribute or nothing.
          */
-        public function set_selected_category( $filter_type, $id = '' ) {
+        public function set_selected_category( $term_id ) {
+   
+            $selected = apply_filters( 'wpsl_selected_category', $term_id );
 
-            $selected_id = isset( $_REQUEST['wpsl-widget-categories'] ) ? ( absint( $_REQUEST['wpsl-widget-categories'] ) ) : '';
-            
-            if ( $selected_id ) {
-                
-                /* 
-                 * Based on the filter type, either return the ID of the selected category, 
-                 * or check if the checkbox needs to be set to checked="checked.
-                 */
-                if ( $filter_type == 'dropdown' ) {
-                    return $selected_id;
-                } else {
-                    return checked( $selected_id, $id, false );
-                }
+            if ( $selected ) {
+                return $selected;
             }
         }
         
@@ -1413,17 +1329,17 @@ if ( !class_exists( 'WPSL_Frontend' ) ) {
            
             global $wpsl_settings;
             
-            $required_defaults = array(
+            $required_defaults = array( 
                 'max_results',
-                'search_radius'
+                'search_radius' 
             );
             
             // Strip out the default values that are wrapped in [].
             foreach ( $required_defaults as $required_default ) {
                 preg_match_all( '/\[([0-9]+?)\]/', $wpsl_settings[$required_default], $match, PREG_PATTERN_ORDER );
-                $output[$required_default] = ( isset( $match[1][0] ) ) ? $match[1][0] : '25';
+                $output[$required_default] = $match[1][0];
             }
-
+            
             return $output;
         }
         
@@ -1434,18 +1350,6 @@ if ( !class_exists( 'WPSL_Frontend' ) ) {
          * @return void
          */
 		public function add_frontend_styles() {
-            
-            global $wpsl_settings;
-            
-            /**
-             * Check if we need to deregister other Google Maps scripts loaded
-             * by other plugins, or the current theme?
-             * 
-             * This in some cases can break the store locator map.
-             */
-            if ( $wpsl_settings['deregister_gmaps'] ) {
-                wpsl_deregister_other_gmaps();
-            }
             
             $min = ( defined( 'SCRIPT_DEBUG' ) && SCRIPT_DEBUG ) ? '' : '.min';
             
@@ -1527,11 +1431,11 @@ if ( !class_exists( 'WPSL_Frontend' ) ) {
          */        
         public function get_marker_props() {
             
-            $marker_props = array(
+            $marker_props = apply_filters( 'wpsl_marker_props', array(
                 'scaledSize' => '24,35', // 50% of the normal image to make it work on retina screens.
                 'origin'     => '0,0',
                 'anchor'     => '12,35'
-            );
+            ) );
             
             /*
              * If this is not defined, the url path will default to 
@@ -1542,48 +1446,23 @@ if ( !class_exists( 'WPSL_Frontend' ) ) {
                 $marker_props['url'] = WPSL_MARKER_URI;
             }
             
-            return apply_filters( 'wpsl_marker_props', $marker_props );
+            return $marker_props;
         }
-
+        
         /**
-         * Get the URL to the admin-ajax.php
-         * 
-         * @since 2.2.3
-         * @return string $ajax_url URL to the admin-ajax.php possibly with the WPML lang param included.
-         */
-        public function get_ajax_url() {
-            
-            global $wpsl;
-            
-            $param = '';
-            
-            if ( $wpsl->i18n->wpml_exists() ) {
-                $param = '?lang=' . ICL_LANGUAGE_CODE;
-            }
-            
-            $ajax_url = admin_url( 'admin-ajax.php' . $param );
-            
-            return $ajax_url;
-        }
-
-        /**
-         * Get the used travel direction mode.
+         * Check if the map is draggable.
          *
-         * @since 2.2.8
-         * @return string $travel_mode The used travel mode for the travel direcions
+         * @since 2.1.0
+         * @return array $draggable The draggable options.
          */
-        public function get_directions_travel_mode() {
-
-            $default = 'driving';
-
-            $travel_mode   = apply_filters( 'wpsl_direction_travel_mode', $default );
-            $allowed_modes = array( 'driving', 'bicycling', 'transit', 'walking' );
-
-            if ( !in_array( $travel_mode, $allowed_modes ) ) {
-                $travel_mode = $default;
-            }
-
-            return strtoupper( $travel_mode );
+        public function maybe_draggable() {
+            
+            $draggable = apply_filters( 'wpsl_draggable_map', array(
+                'enabled'    => true,
+                'disableRes' => '675' // breakpoint where the dragging is disabled in px.
+            ) );
+            
+            return $draggable;
         }
 
         /**
@@ -1595,7 +1474,7 @@ if ( !class_exists( 'WPSL_Frontend' ) ) {
 		public function add_frontend_scripts() {
             
             global $wpsl_settings, $wpsl;
-
+            
             // Only load the required js files on the store locator page or individual store pages.
             if ( empty( $this->load_scripts ) ) {
                 return;
@@ -1604,45 +1483,29 @@ if ( !class_exists( 'WPSL_Frontend' ) ) {
             $min = ( defined( 'SCRIPT_DEBUG' ) && SCRIPT_DEBUG ) ? '' : '.min';
 
             $dropdown_defaults = $this->get_dropdown_defaults();
-            
-            /**
-             * Check if we need to deregister other Google Maps scripts loaded
-             * by other plugins, or the current theme?
-             * 
-             * This in some cases can break the store locator map.
-             */
-            if ( $wpsl_settings['deregister_gmaps'] ) {
-                wpsl_deregister_other_gmaps();
-            }
-            
-            wp_enqueue_script( 'wpsl-gmap', ( 'https://maps.google.com/maps/api/js' . wpsl_get_gmap_api_params( 'browser_key' ) . '' ), '', null, true );
+
+            wp_enqueue_script( 'wpsl-gmap', ( 'https://maps.google.com/maps/api/js' . wpsl_get_gmap_api_params() ), '', null, true );
 
             $base_settings = array(
-                'storeMarker'           => $this->create_retina_filename( $wpsl_settings['store_marker'] ),
-                'mapType'               => $wpsl_settings['map_type'],
-                'mapTypeControl'        => $wpsl_settings['type_control'],
-                'zoomLevel'             => $wpsl_settings['zoom_level'],
-                'startLatlng'           => $wpsl_settings['start_latlng'],
-                'autoZoomLevel'         => $wpsl_settings['auto_zoom_level'],
-                'scrollWheel'           => $wpsl_settings['scrollwheel'],
-				'controlPosition'       => $wpsl_settings['control_position'],
-                'url'                   => WPSL_URL,
-                'markerIconProps'       => $this->get_marker_props(),
-                'storeUrl'              => $wpsl_settings['store_url'],
-                'maxDropdownHeight'     => apply_filters( 'wpsl_max_dropdown_height', 300 ),
-                'enableStyledDropdowns' => apply_filters( 'wpsl_enable_styled_dropdowns', true ),
-                'mapTabAnchor'          => apply_filters( 'wpsl_map_tab_anchor', 'wpsl-map-tab' ),
-                'mapTabAnchorReturn'    => apply_filters( 'wpsl_map_tab_anchor_return', false ),
-                'gestureHandling'       => apply_filters( 'wpsl_gesture_handling', 'auto' ),
-                'directionsTravelMode'  => $this->get_directions_travel_mode(),
-                'runFitBounds'          => $wpsl_settings['run_fitbounds']
+                'storeMarker'     => $this->create_retina_filename( $wpsl_settings['store_marker'] ),
+                'mapType'         => $wpsl_settings['map_type'],
+                'mapTypeControl'  => $wpsl_settings['type_control'],
+                'zoomLevel'       => $wpsl_settings['zoom_level'],
+                'zoomLatlng'      => $wpsl_settings['zoom_latlng'], // @todo change name into startLatlng
+                'autoZoomLevel'   => $wpsl_settings['auto_zoom_level'],
+                'scrollWheel'     => $wpsl_settings['scrollwheel'],
+				'controlPosition' => $wpsl_settings['control_position'],
+                'url'             => WPSL_URL,
+                'markerIconProps' => $this->get_marker_props(),
+                'draggable'       => $this->maybe_draggable(),
+                'storeUrl'        => $wpsl_settings['store_url'],
+                'mapTabAnchor'    => apply_filters( 'wpsl_map_tab_anchor', 'wpsl-map-tab' )
             );
-
+   
 			$locator_map_settings = array(
                 'startMarker'       => $this->create_retina_filename( $wpsl_settings['start_marker'] ),
                 'markerClusters'    => $wpsl_settings['marker_clusters'],
                 'streetView'        => $wpsl_settings['streetview'],
-                'autoComplete'      => $wpsl_settings['autocomplete'],
 				'autoLocate'        => $wpsl_settings['auto_locate'],
                 'autoLoad'          => $wpsl_settings['autoload'],
 				'markerEffect'      => $wpsl_settings['marker_effect'],
@@ -1657,26 +1520,15 @@ if ( !class_exists( 'WPSL_Frontend' ) ) {
                 'templateId'        => $wpsl_settings['template_id'],
                 'maxResults'        => $dropdown_defaults['max_results'],
                 'searchRadius'      => $dropdown_defaults['search_radius'],
-				'distanceUnit'      => wpsl_get_distance_unit(),
+				'distanceUnit'      => $wpsl_settings['distance_unit'],
                 'geoLocationTimout' => apply_filters( 'wpsl_geolocation_timeout', 5000 ),
-				'ajaxurl'           => $this->get_ajax_url(),
+				'ajaxurl'           => admin_url( 'admin-ajax.php' ),
                 'mapControls'       => $this->get_map_controls()
 			);
             
-            /*
-             * If no results are found then by default it will just show the
-             * "No results found" text. This filter makes it possible to show
-             * a custom HTML block instead of the "No results found" text.
-             */
-            $no_results_msg = apply_filters( 'wpsl_no_results', '' );
-            
-            if ( $no_results_msg ) {
-                $locator_map_settings['noResults'] = $no_results_msg;
-            }
-            
-            /*
+            /* 
              * If enabled, include the component filter settings.
-             * @todo see https://developers.google.com/maps/documentation/javascript/releases#327
+             * 
              * See https://developers.google.com/maps/documentation/javascript/geocoding#ComponentFiltering
              */
             if ( $wpsl_settings['api_region'] && $wpsl_settings['api_geocode_component'] ) {
@@ -1687,19 +1539,18 @@ if ( !class_exists( 'WPSL_Frontend' ) ) {
 
             // If the marker clusters are enabled, include the js file and marker settings.
             if ( $wpsl_settings['marker_clusters'] ) {
-                wp_enqueue_script( 'wpsl-cluster', WPSL_URL . 'js/markerclusterer'. $min .'.js', array( 'wpsl-js' ), WPSL_VERSION_NUM, true  ); //not minified version is in the /js folder
+                wp_enqueue_script( 'wpsl-cluster', WPSL_URL . 'js/markerclusterer'. $min .'.js', '', WPSL_VERSION_NUM, true  ); //not minified version is in the /js folder
 
-                $base_settings['clusterZoom']      = $wpsl_settings['cluster_zoom'];
-                $base_settings['clusterSize']      = $wpsl_settings['cluster_size'];
-                $base_settings['clusterImagePath'] = 'https://cdn.rawgit.com/googlemaps/js-marker-clusterer/gh-pages/images/m';
+                $base_settings['clusterZoom'] = $wpsl_settings['cluster_zoom'];
+                $base_settings['clusterSize'] = $wpsl_settings['cluster_size'];
             }
 
             // Check if we need to include the infobox script and settings.
             if ( $wpsl_settings['infowindow_style'] == 'infobox' ) {
                 wp_enqueue_script( 'wpsl-infobox', WPSL_URL . 'js/infobox'. $min .'.js', array( 'wpsl-gmap' ), WPSL_VERSION_NUM, true  ); // Not minified version is in the /js folder
-
+                
                 $base_settings['infoWindowStyle'] = $wpsl_settings['infowindow_style'];
-                $base_settings = $this->get_infobox_settings( $base_settings );
+                $base_settings = $this->get_infobox_settings( $base_settings ); 
             }
 
             // Include the map style.
@@ -1707,7 +1558,7 @@ if ( !class_exists( 'WPSL_Frontend' ) ) {
                 $base_settings['mapStyle'] = strip_tags( stripslashes( json_decode( $wpsl_settings['map_style'] ) ) );
             }
 
-            wp_enqueue_script( 'wpsl-js', apply_filters( 'wpsl_gmap_js', WPSL_URL . 'js/wpsl-gmap'. $min .'.js' ), array( 'jquery' ), WPSL_VERSION_NUM, true );
+            wp_enqueue_script( 'wpsl-js', WPSL_URL . 'js/wpsl-gmap'. $min .'.js', array( 'jquery' ), WPSL_VERSION_NUM, true );
             wp_enqueue_script( 'underscore' );    
 
             // Check if we need to include all the settings and labels or just a part of them.
@@ -1735,14 +1586,14 @@ if ( !class_exists( 'WPSL_Frontend' ) ) {
                 $settings = $base_settings;
             }
             
-            // Check if we need to overwrite JS settings that are set through the [wpsl] shortcode.
-            if ( $this->sl_shortcode_atts && isset( $this->sl_shortcode_atts['js'] ) ) {
-                foreach ( $this->sl_shortcode_atts['js'] as $shortcode_key => $shortcode_val ) {
+            // Check if we need to overwrite settings that are set through the [wpsl] shortcode.
+            if ( $this->sl_shortcode_atts ) {
+                foreach ( $this->sl_shortcode_atts as $shortcode_key => $shortcode_val ) {
                     $settings[$shortcode_key] = $shortcode_val;
                 }
             }
             
-			wp_localize_script( 'wpsl-js', 'wpslSettings', apply_filters( 'wpsl_js_settings', $settings ) );            
+			wp_localize_script( 'wpsl-js', 'wpslSettings', $settings );             
 
             wpsl_create_underscore_templates( $template );
 
@@ -1753,7 +1604,7 @@ if ( !class_exists( 'WPSL_Frontend' ) ) {
                     wp_localize_script( 'wpsl-js', 'wpslMap_' . $i, $map );
                     
                     $i++;
-                }
+                } 
             }
 		}
         
@@ -1784,6 +1635,7 @@ if ( !class_exists( 'WPSL_Frontend' ) ) {
 
             return $settings;
         }
+
     }
 
     new WPSL_Frontend();
