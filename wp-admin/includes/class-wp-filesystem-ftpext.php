@@ -10,13 +10,15 @@
  * WordPress Filesystem Class for implementing FTP.
  *
  * @since 2.5.0
- *
- * @see WP_Filesystem_Base
+ * @package WordPress
+ * @subpackage Filesystem
+ * @uses WP_Filesystem_Base Extends class
  */
 class WP_Filesystem_FTPext extends WP_Filesystem_Base {
 	public $link;
 
 	/**
+	 * @access public
 	 *
 	 * @param array $opt
 	 */
@@ -62,6 +64,7 @@ class WP_Filesystem_FTPext extends WP_Filesystem_Base {
 	}
 
 	/**
+	 * @access public
 	 *
 	 * @return bool
 	 */
@@ -103,6 +106,7 @@ class WP_Filesystem_FTPext extends WP_Filesystem_Base {
 	 * Retrieves the file contents.
 	 *
 	 * @since 2.5.0
+	 * @access public
 	 *
 	 * @param string $file Filename.
 	 * @return string|false File contents on success, false if no temp file could be opened,
@@ -112,16 +116,11 @@ class WP_Filesystem_FTPext extends WP_Filesystem_Base {
 		$tempfile = wp_tempnam($file);
 		$temp = fopen($tempfile, 'w+');
 
-		if ( ! $temp ) {
-			unlink( $tempfile );
+		if ( ! $temp )
 			return false;
-		}
 
-		if ( ! @ftp_fget( $this->link, $temp, $file, FTP_BINARY ) ) {
-			fclose( $temp );
-			unlink( $tempfile );
+		if ( ! @ftp_fget($this->link, $temp, $file, FTP_BINARY ) )
 			return false;
-		}
 
 		fseek( $temp, 0 ); // Skip back to the start of the file being written to
 		$contents = '';
@@ -135,6 +134,7 @@ class WP_Filesystem_FTPext extends WP_Filesystem_Base {
 	}
 
 	/**
+	 * @access public
 	 *
 	 * @param string $file
 	 * @return array
@@ -144,6 +144,7 @@ class WP_Filesystem_FTPext extends WP_Filesystem_Base {
 	}
 
 	/**
+	 * @access public
 	 *
 	 * @param string $file
 	 * @param string $contents
@@ -153,11 +154,8 @@ class WP_Filesystem_FTPext extends WP_Filesystem_Base {
 	public function put_contents($file, $contents, $mode = false ) {
 		$tempfile = wp_tempnam($file);
 		$temp = fopen( $tempfile, 'wb+' );
-
-		if ( ! $temp ) {
-			unlink( $tempfile );
+		if ( ! $temp )
 			return false;
-		}
 
 		mbstring_binary_safe_encoding();
 
@@ -185,6 +183,7 @@ class WP_Filesystem_FTPext extends WP_Filesystem_Base {
 	}
 
 	/**
+	 * @access public
 	 *
 	 * @return string
 	 */
@@ -196,6 +195,7 @@ class WP_Filesystem_FTPext extends WP_Filesystem_Base {
 	}
 
 	/**
+	 * @access public
 	 *
 	 * @param string $dir
 	 * @return bool
@@ -205,6 +205,7 @@ class WP_Filesystem_FTPext extends WP_Filesystem_Base {
 	}
 
 	/**
+	 * @access public
 	 *
 	 * @param string $file
 	 * @param int $mode
@@ -235,6 +236,7 @@ class WP_Filesystem_FTPext extends WP_Filesystem_Base {
 	}
 
 	/**
+	 * @access public
 	 *
 	 * @param string $file
 	 * @return string
@@ -244,6 +246,7 @@ class WP_Filesystem_FTPext extends WP_Filesystem_Base {
 		return $dir[$file]['owner'];
 	}
 	/**
+	 * @access public
 	 *
 	 * @param string $file
 	 * @return string
@@ -254,6 +257,7 @@ class WP_Filesystem_FTPext extends WP_Filesystem_Base {
 	}
 
 	/**
+	 * @access public
 	 *
 	 * @param string $file
 	 * @return string
@@ -264,6 +268,7 @@ class WP_Filesystem_FTPext extends WP_Filesystem_Base {
 	}
 
 	/**
+	 * @access public
 	 *
 	 * @param string $source
 	 * @param string $destination
@@ -281,6 +286,7 @@ class WP_Filesystem_FTPext extends WP_Filesystem_Base {
 	}
 
 	/**
+	 * @access public
 	 *
 	 * @param string $source
 	 * @param string $destination
@@ -292,6 +298,7 @@ class WP_Filesystem_FTPext extends WP_Filesystem_Base {
 	}
 
 	/**
+	 * @access public
 	 *
 	 * @param string $file
 	 * @param bool $recursive
@@ -314,6 +321,7 @@ class WP_Filesystem_FTPext extends WP_Filesystem_Base {
 	}
 
 	/**
+	 * @access public
 	 *
 	 * @param string $file
 	 * @return bool
@@ -329,6 +337,7 @@ class WP_Filesystem_FTPext extends WP_Filesystem_Base {
 	}
 
 	/**
+	 * @access public
 	 *
 	 * @param string $file
 	 * @return bool
@@ -338,6 +347,7 @@ class WP_Filesystem_FTPext extends WP_Filesystem_Base {
 	}
 
 	/**
+	 * @access public
 	 *
 	 * @param string $path
 	 * @return bool
@@ -353,6 +363,7 @@ class WP_Filesystem_FTPext extends WP_Filesystem_Base {
 	}
 
 	/**
+	 * @access public
 	 *
 	 * @param string $file
 	 * @return bool
@@ -362,6 +373,7 @@ class WP_Filesystem_FTPext extends WP_Filesystem_Base {
 	}
 
 	/**
+	 * @access public
 	 *
 	 * @param string $file
 	 * @return bool
@@ -371,6 +383,7 @@ class WP_Filesystem_FTPext extends WP_Filesystem_Base {
 	}
 
 	/**
+	 * @access public
 	 *
 	 * @param string $file
 	 * @return bool
@@ -380,6 +393,7 @@ class WP_Filesystem_FTPext extends WP_Filesystem_Base {
 	}
 
 	/**
+	 * @access public
 	 *
 	 * @param string $file
 	 * @return int
@@ -389,6 +403,7 @@ class WP_Filesystem_FTPext extends WP_Filesystem_Base {
 	}
 
 	/**
+	 * @access public
 	 *
 	 * @param string $file
 	 * @return int
@@ -398,6 +413,7 @@ class WP_Filesystem_FTPext extends WP_Filesystem_Base {
 	}
 
 	/**
+	 * @access public
 	 *
 	 * @param string $file
 	 * @return bool
@@ -407,6 +423,7 @@ class WP_Filesystem_FTPext extends WP_Filesystem_Base {
 	}
 
 	/**
+	 * @access public
 	 *
 	 * @param string $path
 	 * @param mixed $chmod
@@ -426,6 +443,7 @@ class WP_Filesystem_FTPext extends WP_Filesystem_Base {
 	}
 
 	/**
+	 * @access public
 	 *
 	 * @param string $path
 	 * @param bool $recursive
@@ -436,6 +454,7 @@ class WP_Filesystem_FTPext extends WP_Filesystem_Base {
 	}
 
 	/**
+	 * @access public
 	 *
 	 * @staticvar bool $is_windows
 	 * @param string $line
@@ -517,6 +536,7 @@ class WP_Filesystem_FTPext extends WP_Filesystem_Base {
 	}
 
 	/**
+	 * @access public
 	 *
 	 * @param string $path
 	 * @param bool $include_hidden
@@ -573,6 +593,7 @@ class WP_Filesystem_FTPext extends WP_Filesystem_Base {
 	}
 
 	/**
+	 * @access public
 	 */
 	public function __destruct() {
 		if ( $this->link )
