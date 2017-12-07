@@ -4,8 +4,8 @@
  */
 
 /**
- * @internal Clean routine for 1.5 not needed as values used to be saved as string 'on' and those will convert
- * automatically
+ * {@internal Clean routine for 1.5 not needed as values used to be saved as string 'on'
+ *            and those will convert automatically.}}
  */
 class WPSEO_Option_Permalinks extends WPSEO_Option {
 
@@ -25,10 +25,6 @@ class WPSEO_Option_Permalinks extends WPSEO_Option {
 		'cleanpermalink-googlesitesearch' => false,
 		'cleanreplytocom'                 => false,
 		'cleanslugs'                      => true,
-		'hide-feedlinks'                  => false,
-		'hide-rsdlink'                    => false,
-		'hide-shortlink'                  => false,
-		'hide-wlwmanifest'                => false,
 		'redirectattachment'              => false,
 		'stripcategorybase'               => false,
 		'trailingslash'                   => false,

@@ -4,7 +4,7 @@
  */
 
 /**
- * Handle the request for getting the onpage status
+ * Handle the request for getting the Ryte status.
  */
 class WPSEO_OnPage {
 
@@ -14,7 +14,7 @@ class WPSEO_OnPage {
 	const USER_META_KEY = 'wpseo_dismiss_onpage';
 
 	/**
-	 * @var WPSEO_OnPage_Option The OnPage.org option class.
+	 * @var WPSEO_OnPage_Option The Ryte option class.
 	 */
 	private $onpage_option;
 
@@ -53,37 +53,43 @@ class WPSEO_OnPage {
 	 * @return array
 	 */
 	public function add_weekly_schedule( array $schedules ) {
-		$schedules['weekly'] = array( 'interval' => WEEK_IN_SECONDS, 'display' => __( 'Once Weekly' ) );
+		$schedules['weekly'] = array(
+			'interval' => WEEK_IN_SECONDS,
+			'display'  => __( 'Once Weekly', 'wordpress-seo' ),
+		);
 
 		return $schedules;
 	}
 
 	/**
-	 * Fetching the data from onpage.
+	 * Fetching the data from Ryte.
 	 *
 	 * @return bool
 	 */
 	public function fetch_from_onpage() {
-		if ( $this->onpage_option->should_be_fetched() && false !== ( $new_status = $this->request_indexability() ) ) {
+		if ( $this->onpage_option->should_be_fetched() ) {
+			$new_status = $this->request_indexability();
+			if ( false !== $new_status ) {
 
-			// Updates the timestamp in the option.
-			$this->onpage_option->set_last_fetch( time() );
+				// Updates the timestamp in the option.
+				$this->onpage_option->set_last_fetch( time() );
 
-			// The currently indexability status.
-			$old_status = $this->onpage_option->get_status();
+				// The currently indexability status.
+				$old_status = $this->onpage_option->get_status();
 
-			// Saving the new status.
-			$this->onpage_option->set_status( $new_status );
+				// Saving the new status.
+				$this->onpage_option->set_status( $new_status );
 
-			// Saving the option.
-			$this->onpage_option->save_option();
+				// Saving the option.
+				$this->onpage_option->save_option();
 
-			// Check if the status has been changed.
-			if ( $old_status !== $new_status && $new_status !== WPSEO_OnPage_Option::CANNOT_FETCH ) {
-				$this->notify_admins();
+				// Check if the status has been changed.
+				if ( $old_status !== $new_status && $new_status !== WPSEO_OnPage_Option::CANNOT_FETCH ) {
+					$this->notify_admins();
+				}
+
+				return true;
 			}
-
-			return true;
 		}
 
 		return false;
@@ -93,39 +99,55 @@ class WPSEO_OnPage {
 	 * Show a notice when the website is not indexable
 	 */
 	public function show_notice() {
-		
-		// Just a return, because we want to temporary disable this notice (#3998).
-		return;
+
+		$notification        = $this->get_indexability_notification();
+		$notification_center = Yoast_Notification_Center::get();
 
 		if ( $this->should_show_notice() ) {
-			$notice = sprintf(
-				/* translators: 1: opens a link to a related knowledge base article. 2: closes the link */
-				__( '%1$sYour homepage cannot be indexed by search engines%2$s. This is very bad for SEO and should be fixed.', 'wordpress-seo' ),
-				'<a href="http://yoa.st/onpageindexerror" target="_blank">',
-				'</a>'
-			);
+			$notification_center->add_notification( $notification );
 
-			Yoast_Notification_Center::get()->add_notification(
-				new Yoast_Notification(
-					$notice,
-					array(
-						'type'  => 'error yoast-dismissible',
-						'id'    => 'wpseo-dismiss-onpageorg',
-						'nonce' => wp_create_nonce( 'wpseo-dismiss-onpageorg' ),
-					)
-				)
-			);
+			return;
 		}
+
+		$notification_center->remove_notification( $notification );
 	}
 
 	/**
-	 * Send a request to OnPage.org to get the indexability
+	 * Builds the indexability notification
+	 *
+	 * @return Yoast_Notification
+	 */
+	private function get_indexability_notification() {
+		$notice = sprintf(
+			/* translators: 1: opens a link to a related knowledge base article. 2: closes the link */
+			__( '%1$sYour homepage cannot be indexed by search engines%2$s. This is very bad for SEO and should be fixed.', 'wordpress-seo' ),
+			'<a href="' . WPSEO_Shortlinker::get( 'https://yoa.st/onpageindexerror' ) . '" target="_blank">',
+			'</a>'
+		);
+
+		return new Yoast_Notification(
+			$notice,
+			array(
+				'type'         => Yoast_Notification::ERROR,
+				'id'           => 'wpseo-dismiss-onpageorg',
+				'capabilities' => 'wpseo_manage_options',
+			)
+		);
+	}
+
+	/**
+	 * Send a request to Ryte to get the indexability.
 	 *
 	 * @return int(0)|int(1)|false
 	 */
 	protected function request_indexability() {
-		$request  = new WPSEO_OnPage_Request( get_option( 'home' ) );
-		$response = $request->get_response();
+		$parameters = array();
+		if ( $this->wordfence_protection_enabled() ) {
+			$parameters['wf_strict'] = 1;
+		}
+
+		$request  = new WPSEO_OnPage_Request();
+		$response = $request->do_request( get_option( 'home' ), $parameters );
 
 		if ( isset( $response['is_indexable'] ) ) {
 			return (int) $response['is_indexable'];
@@ -140,12 +162,12 @@ class WPSEO_OnPage {
 	 * @return bool
 	 */
 	protected function should_show_notice() {
-		// If development note is on or the tagline notice is shown, just don't show this notice.
+		// If development mode is on or the blog is not public, just don't show this notice.
 		if ( WPSEO_Utils::is_development_mode() || ( '0' === get_option( 'blog_public' ) ) ) {
 			return false;
 		}
 
-		return WPSEO_Utils::grant_access() && ! $this->user_has_dismissed() && $this->onpage_option->get_status() === WPSEO_OnPage_Option::IS_NOT_INDEXABLE;
+		return $this->onpage_option->get_status() === WPSEO_OnPage_Option::IS_NOT_INDEXABLE;
 	}
 
 	/**
@@ -172,7 +194,7 @@ class WPSEO_OnPage {
 		// Adding admin notice if necessary.
 		add_filter( 'admin_init', array( $this, 'show_notice' ) );
 
-		// Setting the action for the OnPage fetch.
+		// Setting the action for the Ryte fetch.
 		add_action( 'wpseo_onpage_fetch', array( $this, 'fetch_from_onpage' ) );
 	}
 
@@ -186,16 +208,7 @@ class WPSEO_OnPage {
 	}
 
 	/**
-	 * Get the state from the user to check if the current user has dismissed
-	 *
-	 * @return mixed
-	 */
-	private function user_has_dismissed() {
-		return '1' === get_user_meta( get_current_user_id(), WPSEO_OnPage::USER_META_KEY, true );
-	}
-
-	/**
-	 * Redo the fetch request for onpage
+	 * Redo the fetch request for Ryte.
 	 */
 	private function catch_redo_listener() {
 		if ( filter_input( INPUT_GET, 'wpseo-redo-onpage' ) === '1' ) {
@@ -205,4 +218,20 @@ class WPSEO_OnPage {
 		}
 	}
 
+	/**
+	 * Checks if WordFence protects the site against 'fake' Google crawlers.
+	 *
+	 * @return boolean
+	 */
+	private function wordfence_protection_enabled() {
+		if ( ! class_exists( 'wfConfig' ) ) {
+			return false;
+		}
+
+		if ( ! method_exists( 'wfConfig', 'get' ) ) {
+			return false;
+		}
+
+		return (bool) wfConfig::get( 'blockFakeBots' );
+	}
 }
