@@ -29,7 +29,7 @@ class WP_Importer {
 		// Grab all posts in chunks
 		do {
 			$meta_key = $importer_name . '_' . $bid . '_permalink';
-			$sql = $wpdb->prepare( "SELECT post_id, meta_value FROM $wpdb->postmeta WHERE meta_key = %s LIMIT %d,%d", $meta_key, $offset, $limit );
+			$sql = $wpdb->prepare( "SELECT post_id, meta_value FROM $wpdb->postmeta WHERE meta_key = '%s' LIMIT %d,%d", $meta_key, $offset, $limit );
 			$results = $wpdb->get_results( $sql );
 
 			// Increment offset
@@ -136,15 +136,13 @@ class WP_Importer {
 				fwrite( STDERR, "Error: can not determine blog_id from $blog_id\n" );
 				exit();
 			}
-			if ( empty( $parsed['path'] ) ) {
+			if ( empty( $parsed['path'] ) )
 				$parsed['path'] = '/';
-			}
-			$blogs = get_sites( array( 'domain' => $parsed['host'], 'number' => 1, 'path' => $parsed['path'] ) );
-			if ( ! $blogs ) {
+			$blog = get_blog_details( array( 'domain' => $parsed['host'], 'path' => $parsed['path'] ) );
+			if ( !$blog ) {
 				fwrite( STDERR, "Error: Could not find blog\n" );
 				exit();
 			}
-			$blog = array_shift( $blogs );
 			$blog_id = (int) $blog->blog_id;
 		}
 
@@ -248,11 +246,9 @@ class WP_Importer {
 	}
 
 	/**
-	 * Resets global variables that grow out of control during imports.
+	 * Reset global variables that grow out of control during imports
 	 *
-	 * @since 3.0.0
-	 *
-	 * @global wpdb  $wpdb       WordPress database abstraction object.
+	 * @global wpdb  $wpdb
 	 * @global array $wp_actions
 	 */
 	public function stop_the_insanity() {
