@@ -221,7 +221,8 @@ table.fixed td {
 }
 
 #wpbody-content input.button,
-#wpbody-content input.button-primary {
+#wpbody-content input.button-primary,
+#wpbody-content input.button-secondary {
 	overflow: visible;
 }
 
@@ -243,7 +244,7 @@ table.fixed td {
 }
 
 #wpbody-content .postbox {
-	border: 1px solid #ddd;
+	border: 1px solid #dfdfdf;
 }
 
 #wpbody-content .postbox .hndle {
@@ -285,7 +286,7 @@ table.fixed td {
 	width: 29%;
 }
 
-.inline-edit-row .submit {
+.inline-edit-row p.submit {
 	zoom: 100%;
 }
 
@@ -441,17 +442,13 @@ div#dashboard-widgets {
 	padding-left: 1px;
 }
 
-.tagchecklist > li, .tagchecklist .ntdelbutton {
+.tagchecklist span, .tagchecklist span a {
 	display: inline-block;
 	display: block;
 }
 
-.tagchecklist .ntdelbutton:focus .remove-tag-icon:before {
-	outline: 1px solid #5b9dd9;
-}
-
-.tablenav .button,
-.nav .button {
+.tablenav .button-secondary,
+.nav .button-secondary {
 	padding-top: 2px;
 	padding-bottom: 2px;
 }
@@ -510,7 +507,7 @@ table.ie-fixed {
 	border-collapse: collapse;
 }
 
-.tablenav a.button {
+.tablenav a.button-secondary {
 	display: inline-block;
 	padding: 2px 5px;
 }
@@ -641,7 +638,7 @@ input[type="password"],
 .mce-close {
 	font-family: 'tinymce', Arial;
 	font-style: normal;
-	font-weight: 400;
+	font-weight: normal;
 	font-variant: normal;
 	font-size: 16px;
 	margin-right: 0;
@@ -690,7 +687,7 @@ input[type="password"],
 * html .stuffbox,
 * html .stuffbox input,
 * html .stuffbox textarea {
-	border: 1px solid #ddd;
+	border: 1px solid #DFDFDF;
 }
 
 * html div.widget-liquid-left {
@@ -724,7 +721,7 @@ input[type="password"],
 }
 
 * html input {
-	border: 1px solid #ddd;
+	border: 1px solid #dfdfdf;
 }
 
 * html .edit-box {

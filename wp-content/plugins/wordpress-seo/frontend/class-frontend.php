@@ -66,8 +66,10 @@ class WPSEO_Frontend {
 	 */
 	private $required_options = array( 'wpseo', 'wpseo_rss', 'wpseo_social', 'wpseo_permalinks', 'wpseo_titles' );
 
-	/** @var WPSEO_Frontend_Page_Type */
-	protected $frontend_page_type;
+	/**
+	 * @var array
+	 */
+	private $hooks;
 
 	/**
 	 * Class constructor.
@@ -150,15 +152,13 @@ class WPSEO_Frontend {
 			add_filter( 'wpseo_title', array( $this, 'title_test_helper' ) );
 		}
 
-		$integrations = array(
-			new WPSEO_Frontend_Primary_Category(),
-			new WPSEO_JSON_LD(),
-			new WPSEO_WooCommerce_Shop_Page(),
-		);
+		$primary_category = new WPSEO_Frontend_Primary_Category();
+		$primary_category->register_hooks();
 
-		foreach ( $integrations as $integration ) {
-			$integration->register_hooks();
-		}
+		$json_ld = new WPSEO_JSON_LD();
+		$json_ld->register_hooks();
+
+		$this->hooks = array( $primary_category, $json_ld );
 	}
 
 	/**
@@ -451,9 +451,11 @@ class WPSEO_Frontend {
 		elseif ( $this->is_home_posts_page() ) {
 			$title = $this->get_title_from_options( 'title-home-wpseo' );
 		}
-		elseif ( $this->get_frontend_page_type()->is_simple_page() ) {
-			$post  = get_post( $this->get_frontend_page_type()->get_simple_page_id() );
-			$title = $this->get_content_title( $post );
+		elseif ( $this->is_posts_page() ) {
+			$title = $this->get_content_title( get_post( get_option( 'page_for_posts' ) ) );
+		}
+		elseif ( is_singular() ) {
+			$title = $this->get_content_title();
 
 			if ( ! is_string( $title ) || '' === $title ) {
 				$title_part = $original_title;
@@ -1280,16 +1282,12 @@ class WPSEO_Frontend {
 			$post_type = $post->post_type;
 		}
 
-		if ( $this->get_frontend_page_type()->is_simple_page() ) {
-			$post      = get_post( $this->get_frontend_page_type()->get_simple_page_id() );
-			$post_type = $post->post_type;
-
-			$option_key = 'metadesc-' . $post_type;
-			if ( ( $metadesc === '' && $post_type !== '' ) && isset( $this->options[ $option_key ] ) ) {
-				$template = $this->options[ $option_key ];
+		if ( is_singular() ) {
+			if ( ( $metadesc === '' && $post_type !== '' ) && isset( $this->options[ 'metadesc-' . $post_type ] ) ) {
+				$template = $this->options[ 'metadesc-' . $post_type ];
 				$term     = $post;
 			}
-			$metadesc_override = WPSEO_Meta::get_value( 'metadesc', $post->ID );
+			$metadesc_override = WPSEO_Meta::get_value( 'metadesc' );
 		}
 		else {
 			if ( is_search() ) {
@@ -1301,6 +1299,14 @@ class WPSEO_Frontend {
 
 				if ( empty( $template ) ) {
 					$template = get_bloginfo( 'description' );
+				}
+			}
+			elseif ( $this->is_posts_page() ) {
+				$metadesc = WPSEO_Meta::get_value( 'metadesc', get_option( 'page_for_posts' ) );
+				if ( ( $metadesc === '' && $post_type !== '' ) && isset( $this->options[ 'metadesc-' . $post_type ] ) ) {
+					$page     = get_post( get_option( 'page_for_posts' ) );
+					$template = $this->options[ 'metadesc-' . $post_type ];
+					$term     = $page;
 				}
 			}
 			elseif ( $this->is_home_static_page() ) {
@@ -1980,19 +1986,6 @@ class WPSEO_Frontend {
 			"<!-- / %s. -->\n\n",
 			esc_html( $this->head_product_name() )
 		);
-	}
-
-	/**
-	 * Returns an instance of the frontend page type.
-	 *
-	 * @return WPSEO_Frontend_Page_Type The instance.
-	 */
-	protected function get_frontend_page_type() {
-		if ( ! $this->frontend_page_type ) {
-			$this->frontend_page_type = new WPSEO_Frontend_Page_Type();
-		}
-
-		return $this->frontend_page_type;
 	}
 
 	/** Deprecated functions */

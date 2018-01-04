@@ -13,9 +13,6 @@ class WPSEO_OpenGraph {
 	 */
 	public $options = array();
 
-	/** @var WPSEO_Frontend_Page_Type */
-	protected $frontend_page_type;
-
 	/**
 	 * Class constructor.
 	 */
@@ -47,9 +44,6 @@ class WPSEO_OpenGraph {
 		}
 		add_filter( 'jetpack_enable_open_graph', '__return_false' );
 		add_action( 'wpseo_head', array( $this, 'opengraph' ), 30 );
-
-		// Class for determine the current page type.
-		$this->frontend_page_type = new WPSEO_Frontend_Page_Type();
 	}
 
 	/**
@@ -245,10 +239,12 @@ class WPSEO_OpenGraph {
 	 */
 	public function og_title( $echo = true ) {
 
-		$frontend = WPSEO_Frontend::get_instance();
+		$frontend      = WPSEO_Frontend::get_instance();
+		$is_posts_page = $frontend->is_posts_page();
 
-		if ( $this->frontend_page_type->is_simple_page() ) {
-			$post_id = $this->frontend_page_type->get_simple_page_id();
+		if ( is_singular() || $is_posts_page ) {
+
+			$post_id = ( $is_posts_page ) ? get_option( 'page_for_posts' ) : get_the_ID();
 			$post    = get_post( $post_id );
 			$title   = WPSEO_Meta::get_value( 'opengraph-title', $post_id );
 
@@ -627,8 +623,10 @@ class WPSEO_OpenGraph {
 			}
 		}
 
-		if ( $this->frontend_page_type->is_simple_page() ) {
-			$post_id = $this->frontend_page_type->get_simple_page_id();
+		$is_posts_page = $frontend->is_posts_page();
+
+		if ( is_singular() || $is_posts_page ) {
+			$post_id = ( $is_posts_page ) ? get_option( 'page_for_posts' ) : get_the_ID();
 			$post    = get_post( $post_id );
 			$ogdesc  = WPSEO_Meta::get_value( 'opengraph-description', $post_id );
 

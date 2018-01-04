@@ -20,6 +20,7 @@ class WP_User_Query {
 	 * Query vars, after parsing
 	 *
 	 * @since 3.5.0
+	 * @access public
 	 * @var array
 	 */
 	public $query_vars = array();
@@ -28,6 +29,7 @@ class WP_User_Query {
 	 * List of found user ids
 	 *
 	 * @since 3.1.0
+	 * @access private
 	 * @var array
 	 */
 	private $results;
@@ -36,6 +38,7 @@ class WP_User_Query {
 	 * Total number of found users for the current query
 	 *
 	 * @since 3.1.0
+	 * @access private
 	 * @var int
 	 */
 	private $total_users = 0;
@@ -44,6 +47,7 @@ class WP_User_Query {
 	 * Metadata query container.
 	 *
 	 * @since 4.2.0
+	 * @access public
 	 * @var WP_Meta_Query
 	 */
 	public $meta_query = false;
@@ -52,6 +56,7 @@ class WP_User_Query {
 	 * The SQL query used to fetch matching users.
 	 *
 	 * @since 4.4.0
+	 * @access public
 	 * @var string
 	 */
 	public $request;
@@ -70,7 +75,7 @@ class WP_User_Query {
 	 *
 	 * @since 3.1.0
 	 *
-	 * @param null|string|array $query Optional. The query variables.
+	 * @param null|string|array $args Optional. The query variables.
 	 */
 	public function __construct( $query = null ) {
 		if ( ! empty( $query ) ) {
@@ -83,13 +88,14 @@ class WP_User_Query {
 	 * Fills in missing query variables with default values.
 	 *
 	 * @since 4.4.0
+	 * @access public
 	 *
 	 * @param array $args Query vars, as passed to `WP_User_Query`.
 	 * @return array Complete query variables with undefined ones filled in with defaults.
 	 */
 	public static function fill_query_vars( $args ) {
 		$defaults = array(
-			'blog_id' => get_current_blog_id(),
+			'blog_id' => $GLOBALS['blog_id'],
 			'role' => '',
 			'role__in' => array(),
 			'role__not_in' => array(),
@@ -109,12 +115,6 @@ class WP_User_Query {
 			'fields' => 'all',
 			'who' => '',
 			'has_published_posts' => null,
-			'nicename' => '',
-			'nicename__in' => array(),
-			'nicename__not_in' => array(),
-			'login' => '',
-			'login__in' => array(),
-			'login__not_in' => array()
 		);
 
 		return wp_parse_args( $args, $defaults );
@@ -131,9 +131,8 @@ class WP_User_Query {
 	 * @since 4.4.0 Added 'paged', 'role__in', and 'role__not_in' parameters. The 'role' parameter was updated to
 	 *              permit an array or comma-separated list of values. The 'number' parameter was updated to support
 	 *              querying for all users with using -1.
-	 * @since 4.7.0 Added 'nicename', 'nicename__in', 'nicename__not_in', 'login', 'login__in',
-	 *              and 'login__not_in' parameters.
 	 *
+	 * @access public
 	 *
 	 * @global wpdb $wpdb WordPress database abstraction object.
 	 * @global int  $blog_id
@@ -141,7 +140,7 @@ class WP_User_Query {
 	 * @param string|array $query {
 	 *     Optional. Array or string of Query parameters.
 	 *
-	 *     @type int          $blog_id             The site ID. Default is the current site.
+	 *     @type int          $blog_id             The site ID. Default is the global blog id.
 	 *     @type string|array $role                An array or a comma-separated list of role names that users must match
 	 *                                             to be included in results. Note that this is an inclusive list: users
 	 *                                             must match *each* role. Default empty.
@@ -166,12 +165,12 @@ class WP_User_Query {
 	 *                                             an array of values, or a multi-dimensional array with fields as
 	 *                                             keys and orders ('ASC' or 'DESC') as values. Accepted values are
 	 *                                             'ID', 'display_name' (or 'name'), 'include', 'user_login'
-	 *                                             (or 'login'), 'login__in', 'user_nicename' (or 'nicename'),
-	 *                                             'nicename__in', 'user_email (or 'email'), 'user_url' (or 'url'),
-	 *                                             'user_registered' (or 'registered'), 'post_count', 'meta_value',
-	 *                                             'meta_value_num', the value of `$meta_key`, or an array key of
-	 *                                             `$meta_query`. To use 'meta_value' or 'meta_value_num', `$meta_key`
-	 *                                             must be also be defined. Default 'user_login'.
+	 *                                             (or 'login'), 'user_nicename' (or 'nicename'), 'user_email'
+	 *                                             (or 'email'), 'user_url' (or 'url'), 'user_registered'
+	 *                                             or 'registered'), 'post_count', 'meta_value', 'meta_value_num',
+	 *                                             the value of `$meta_key`, or an array key of `$meta_query`. To use
+	 *                                             'meta_value' or 'meta_value_num', `$meta_key` must be also be
+	 *                                             defined. Default 'user_login'.
 	 *     @type string       $order               Designates ascending or descending order of users. Order values
 	 *                                             passed as part of an `$orderby` array take precedence over this
 	 *                                             parameter. Accepts 'ASC', 'DESC'. Default 'ASC'.
@@ -196,16 +195,6 @@ class WP_User_Query {
 	 *     @type bool|array   $has_published_posts Pass an array of post types to filter results to users who have
 	 *                                             published posts in those post types. `true` is an alias for all
 	 *                                             public post types.
-	 *     @type string       $nicename            The user nicename. Default empty.
-	 *     @type array        $nicename__in        An array of nicenames to include. Users matching one of these
-	 *                                             nicenames will be included in results. Default empty array.
-	 *     @type array        $nicename__not_in    An array of nicenames to exclude. Users matching one of these
-	 *                                             nicenames will not be included in results. Default empty array.
-	 *     @type string       $login               The user login. Default empty.
-	 *     @type array        $login__in           An array of logins to include. Users matching one of these
-	 *                                             logins will be included in results. Default empty array.
-	 *     @type array        $login__not_in       An array of logins to exclude. Users matching one of these
-	 *                                             logins will not be included in results. Default empty array.
 	 * }
 	 */
 	public function prepare_query( $query = array() ) {
@@ -266,6 +255,13 @@ class WP_User_Query {
 			$blog_id = absint( $qv['blog_id'] );
 		}
 
+		if ( isset( $qv['who'] ) && 'authors' == $qv['who'] && $blog_id ) {
+			$qv['meta_key'] = $wpdb->get_blog_prefix( $blog_id ) . 'user_level';
+			$qv['meta_value'] = 0;
+			$qv['meta_compare'] = '!=';
+			$qv['blog_id'] = $blog_id = 0; // Prevent extra meta query
+		}
+
 		if ( $qv['has_published_posts'] && $blog_id ) {
 			if ( true === $qv['has_published_posts'] ) {
 				$post_types = get_post_types( array( 'public' => true ) );
@@ -281,66 +277,9 @@ class WP_User_Query {
 			$this->query_where .= " AND $wpdb->users.ID IN ( SELECT DISTINCT $posts_table.post_author FROM $posts_table WHERE $posts_table.post_status = 'publish' AND $posts_table.post_type IN ( " . join( ", ", $post_types ) . " ) )";
 		}
 
-		// nicename
-		if ( '' !== $qv['nicename']) {
-			$this->query_where .= $wpdb->prepare( ' AND user_nicename = %s', $qv['nicename'] );
-		}
-
-		if ( ! empty( $qv['nicename__in'] ) ) {
-			$sanitized_nicename__in = array_map( 'esc_sql', $qv['nicename__in'] );
-			$nicename__in = implode( "','", $sanitized_nicename__in );
-			$this->query_where .= " AND user_nicename IN ( '$nicename__in' )";
-		}
-
-		if ( ! empty( $qv['nicename__not_in'] ) ) {
-			$sanitized_nicename__not_in = array_map( 'esc_sql', $qv['nicename__not_in'] );
-			$nicename__not_in = implode( "','", $sanitized_nicename__not_in );
-			$this->query_where .= " AND user_nicename NOT IN ( '$nicename__not_in' )";
-		}
-
-		// login
-		if ( '' !== $qv['login']) {
-			$this->query_where .= $wpdb->prepare( ' AND user_login = %s', $qv['login'] );
-		}
-
-		if ( ! empty( $qv['login__in'] ) ) {
-			$sanitized_login__in = array_map( 'esc_sql', $qv['login__in'] );
-			$login__in = implode( "','", $sanitized_login__in );
-			$this->query_where .= " AND user_login IN ( '$login__in' )";
-		}
-
-		if ( ! empty( $qv['login__not_in'] ) ) {
-			$sanitized_login__not_in = array_map( 'esc_sql', $qv['login__not_in'] );
-			$login__not_in = implode( "','", $sanitized_login__not_in );
-			$this->query_where .= " AND user_login NOT IN ( '$login__not_in' )";
-		}
-
 		// Meta query.
 		$this->meta_query = new WP_Meta_Query();
 		$this->meta_query->parse_query_vars( $qv );
-
-		if ( isset( $qv['who'] ) && 'authors' == $qv['who'] && $blog_id ) {
-			$who_query = array(
-				'key' => $wpdb->get_blog_prefix( $blog_id ) . 'user_level',
-				'value' => 0,
-				'compare' => '!=',
-			);
-
-			// Prevent extra meta query.
-			$qv['blog_id'] = $blog_id = 0;
-
-			if ( empty( $this->meta_query->queries ) ) {
-				$this->meta_query->queries = array( $who_query );
-			} else {
-				// Append the cap query to the original queries and reparse the query.
-				$this->meta_query->queries = array(
-					'relation' => 'AND',
-					array( $this->meta_query->queries, $who_query ),
-				);
-			}
-
-			$this->meta_query->parse_query_vars( $this->meta_query->queries );
-		}
 
 		$roles = array();
 		if ( isset( $qv['role'] ) ) {
@@ -473,11 +412,7 @@ class WP_User_Query {
 				continue;
 			}
 
-			if ( 'nicename__in' === $_orderby || 'login__in' === $_orderby ) {
-				$orderby_array[] = $parsed;
-			} else {
-				$orderby_array[] = $parsed . ' ' . $this->parse_order( $_order );
-			}
+			$orderby_array[] = $parsed . ' ' . $this->parse_order( $_order );
 		}
 
 		// If no valid clauses were found, order by user_login.
@@ -515,9 +450,8 @@ class WP_User_Query {
 				$search = trim($search, '*');
 
 			$search_columns = array();
-			if ( $qv['search_columns'] ) {
-				$search_columns = array_intersect( $qv['search_columns'], array( 'ID', 'user_login', 'user_email', 'user_url', 'user_nicename', 'display_name' ) );
-			}
+			if ( $qv['search_columns'] )
+				$search_columns = array_intersect( $qv['search_columns'], array( 'ID', 'user_login', 'user_email', 'user_url', 'user_nicename' ) );
 			if ( ! $search_columns ) {
 				if ( false !== strpos( $search, '@') )
 					$search_columns = array('user_email');
@@ -530,7 +464,7 @@ class WP_User_Query {
 			}
 
 			/**
-			 * Filters the columns to search in a WP_User_Query search.
+			 * Filter the columns to search in a WP_User_Query search.
 			 *
 			 * The default columns depend on the search term, and include 'user_email',
 			 * 'user_login', 'ID', 'user_url', 'display_name', and 'user_nicename'.
@@ -597,7 +531,7 @@ class WP_User_Query {
 		}
 
 		/**
-		 * Filters SELECT FOUND_ROWS() query for the current WP_User_Query instance.
+		 * Filter SELECT FOUND_ROWS() query for the current WP_User_Query instance.
 		 *
 		 * @since 3.2.0
 		 *
@@ -606,7 +540,7 @@ class WP_User_Query {
 		 * @param string $sql The SELECT FOUND_ROWS() query for the current WP_User_Query.
 		 */
 		if ( isset( $qv['count_total'] ) && $qv['count_total'] )
-			$this->total_users = (int) $wpdb->get_var( apply_filters( 'found_users_query', 'SELECT FOUND_ROWS()' ) );
+			$this->total_users = $wpdb->get_var( apply_filters( 'found_users_query', 'SELECT FOUND_ROWS()' ) );
 
 		if ( !$this->results )
 			return;
@@ -630,6 +564,7 @@ class WP_User_Query {
 	 * Retrieve query variable.
 	 *
 	 * @since 3.5.0
+	 * @access public
 	 *
 	 * @param string $query_var Query variable key.
 	 * @return mixed
@@ -645,6 +580,7 @@ class WP_User_Query {
 	 * Set query variable.
 	 *
 	 * @since 3.5.0
+	 * @access public
 	 *
 	 * @param string $query_var Query variable key.
 	 * @param mixed $value Query variable value.
@@ -656,6 +592,7 @@ class WP_User_Query {
 	/**
 	 * Used internally to generate an SQL string for searching across multiple columns
 	 *
+	 * @access protected
 	 * @since 3.1.0
 	 *
 	 * @global wpdb $wpdb WordPress database abstraction object.
@@ -689,6 +626,7 @@ class WP_User_Query {
 	 * Return the list of users.
 	 *
 	 * @since 3.1.0
+	 * @access public
 	 *
 	 * @return array Array of results.
 	 */
@@ -700,6 +638,7 @@ class WP_User_Query {
 	 * Return the total number of users for the current query.
 	 *
 	 * @since 3.1.0
+	 * @access public
 	 *
 	 * @return int Number of total users.
 	 */
@@ -711,6 +650,7 @@ class WP_User_Query {
 	 * Parse and sanitize 'orderby' keys passed to the user query.
 	 *
 	 * @since 4.2.0
+	 * @access protected
 	 *
 	 * @global wpdb $wpdb WordPress database abstraction object.
 	 *
@@ -750,14 +690,6 @@ class WP_User_Query {
 			$include = wp_parse_id_list( $this->query_vars['include'] );
 			$include_sql = implode( ',', $include );
 			$_orderby = "FIELD( $wpdb->users.ID, $include_sql )";
-		} elseif ( 'nicename__in' === $orderby ) {
-			$sanitized_nicename__in = array_map( 'esc_sql', $this->query_vars['nicename__in'] );
-			$nicename__in = implode( "','", $sanitized_nicename__in );
-			$_orderby = "FIELD( user_nicename, '$nicename__in' )";
-		} elseif ( 'login__in' === $orderby ) {
-			$sanitized_login__in = array_map( 'esc_sql', $this->query_vars['login__in'] );
-			$login__in = implode( "','", $sanitized_login__in );
-			$_orderby = "FIELD( user_login, '$login__in' )";
 		} elseif ( isset( $meta_query_clauses[ $orderby ] ) ) {
 			$meta_clause = $meta_query_clauses[ $orderby ];
 			$_orderby = sprintf( "CAST(%s.meta_value AS %s)", esc_sql( $meta_clause['alias'] ), esc_sql( $meta_clause['cast'] ) );
@@ -770,6 +702,7 @@ class WP_User_Query {
 	 * Parse an 'order' query variable and cast it to ASC or DESC as necessary.
 	 *
 	 * @since 4.2.0
+	 * @access protected
 	 *
 	 * @param string $order The 'order' query variable.
 	 * @return string The sanitized 'order' query variable.
@@ -787,9 +720,10 @@ class WP_User_Query {
 	}
 
 	/**
-	 * Make private properties readable for backward compatibility.
+	 * Make private properties readable for backwards compatibility.
 	 *
 	 * @since 4.0.0
+	 * @access public
 	 *
 	 * @param string $name Property to get.
 	 * @return mixed Property.
@@ -801,9 +735,10 @@ class WP_User_Query {
 	}
 
 	/**
-	 * Make private properties settable for backward compatibility.
+	 * Make private properties settable for backwards compatibility.
 	 *
 	 * @since 4.0.0
+	 * @access public
 	 *
 	 * @param string $name  Property to check if set.
 	 * @param mixed  $value Property value.
@@ -816,9 +751,10 @@ class WP_User_Query {
 	}
 
 	/**
-	 * Make private properties checkable for backward compatibility.
+	 * Make private properties checkable for backwards compatibility.
 	 *
 	 * @since 4.0.0
+	 * @access public
 	 *
 	 * @param string $name Property to check if set.
 	 * @return bool Whether the property is set.
@@ -830,9 +766,10 @@ class WP_User_Query {
 	}
 
 	/**
-	 * Make private properties un-settable for backward compatibility.
+	 * Make private properties un-settable for backwards compatibility.
 	 *
 	 * @since 4.0.0
+	 * @access public
 	 *
 	 * @param string $name Property to unset.
 	 */
@@ -843,9 +780,10 @@ class WP_User_Query {
 	}
 
 	/**
-	 * Make private/protected methods readable for backward compatibility.
+	 * Make private/protected methods readable for backwards compatibility.
 	 *
 	 * @since 4.0.0
+	 * @access public
 	 *
 	 * @param callable $name      Method to call.
 	 * @param array    $arguments Arguments to pass when calling.
