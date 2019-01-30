@@ -388,7 +388,6 @@ class WPSEO_Utils {
 			'on',
 			'On',
 			'ON',
-
 		);
 		$false = array(
 			'0',
@@ -740,7 +739,6 @@ class WPSEO_Utils {
 		return apply_filters( 'wpseo_format_admin_url', $formatted_url );
 	}
 
-
 	/**
 	 * Get plugin name from file.
 	 *
@@ -835,6 +833,7 @@ class WPSEO_Utils {
 			'wpseo_tools',
 			'wpseo_search_console',
 			'wpseo_licenses',
+			'wpseo_courses',
 		);
 
 		return in_array( $current_page, $yoast_seo_free_pages, true );
@@ -924,7 +923,7 @@ class WPSEO_Utils {
 	 * @return string
 	 */
 	public static function get_icon_svg( $base64 = true ) {
-		$svg = '<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xml:space="preserve" width="100%" height="100%" style="fill:#82878c" viewBox="0 0 512 512"><g><g><g><g><path d="M203.6,395c6.8-17.4,6.8-36.6,0-54l-79.4-204h70.9l47.7,149.4l74.8-207.6H116.4c-41.8,0-76,34.2-76,76V357c0,41.8,34.2,76,76,76H173C189,424.1,197.6,410.3,203.6,395z"/></g><g><path d="M471.6,154.8c0-41.8-34.2-76-76-76h-3L285.7,365c-9.6,26.7-19.4,49.3-30.3,68h216.2V154.8z"/></g></g><path stroke-width="2.974" stroke-miterlimit="10" d="M338,1.3l-93.3,259.1l-42.1-131.9h-89.1l83.8,215.2c6,15.5,6,32.5,0,48c-7.4,19-19,37.3-53,41.9l-7.2,1v76h8.3c81.7,0,118.9-57.2,149.6-142.9L431.6,1.3H338z M279.4,362c-32.9,92-67.6,128.7-125.7,131.8v-45c37.5-7.5,51.3-31,59.1-51.1c7.5-19.3,7.5-40.7,0-60l-75-192.7h52.8l53.3,166.8l105.9-294h58.1L279.4,362z"/></g></g></svg>';
+		$svg = '<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xml:space="preserve" width="100%" height="100%" style="fill:#82878c" viewBox="0 0 512 512" role="img" aria-hidden="true" focusable="false"><g><g><g><g><path d="M203.6,395c6.8-17.4,6.8-36.6,0-54l-79.4-204h70.9l47.7,149.4l74.8-207.6H116.4c-41.8,0-76,34.2-76,76V357c0,41.8,34.2,76,76,76H173C189,424.1,197.6,410.3,203.6,395z"/></g><g><path d="M471.6,154.8c0-41.8-34.2-76-76-76h-3L285.7,365c-9.6,26.7-19.4,49.3-30.3,68h216.2V154.8z"/></g></g><path stroke-width="2.974" stroke-miterlimit="10" d="M338,1.3l-93.3,259.1l-42.1-131.9h-89.1l83.8,215.2c6,15.5,6,32.5,0,48c-7.4,19-19,37.3-53,41.9l-7.2,1v76h8.3c81.7,0,118.9-57.2,149.6-142.9L431.6,1.3H338z M279.4,362c-32.9,92-67.6,128.7-125.7,131.8v-45c37.5-7.5,51.3-31,59.1-51.1c7.5-19.3,7.5-40.7,0-60l-75-192.7h52.8l53.3,166.8l105.9-294h58.1L279.4,362z"/></g></g></svg>';
 
 		if ( $base64 ) {
 			return 'data:image/svg+xml;base64,' . base64_encode( $svg );
@@ -1000,42 +999,6 @@ SVG;
 			&& version_compare( REST_API_VERSION, $minimum_version, '>=' ) );
 	}
 
-	/********************** DEPRECATED METHODS **********************/
-
-	/**
-	 * Returns the language part of a given locale, defaults to english when the $locale is empty.
-	 *
-	 * @see        WPSEO_Language_Utils::get_language()
-	 *
-	 * @since      3.4
-	 *
-	 * @param string $locale The locale to get the language of.
-	 *
-	 * @returns string The language part of the locale.
-	 */
-	public static function get_language( $locale ) {
-		return WPSEO_Language_Utils::get_language( $locale );
-	}
-
-	/**
-	 * Returns the user locale for the language to be used in the admin.
-	 *
-	 * WordPress 4.7 introduced the ability for users to specify an Admin language
-	 * different from the language used on the front end. This checks if the feature
-	 * is available and returns the user's language, with a fallback to the site's language.
-	 * Can be removed when support for WordPress 4.6 will be dropped, in favor
-	 * of WordPress get_user_locale() that already fallbacks to the site's locale.
-	 *
-	 * @see        WPSEO_Language_Utils::get_user_locale()
-	 *
-	 * @since      4.1
-	 *
-	 * @returns string The locale.
-	 */
-	public static function get_user_locale() {
-		return WPSEO_Language_Utils::get_user_locale();
-	}
-
 	/**
 	 * Determine whether or not the metabox should be displayed for a post type.
 	 *
@@ -1049,6 +1012,10 @@ SVG;
 		}
 
 		if ( ! isset( $post_type ) || ! WPSEO_Post_Type::is_post_type_accessible( $post_type ) ) {
+			return false;
+		}
+
+		if ( $post_type === 'attachment' && WPSEO_Options::get( 'disable-attachment' ) ) {
 			return false;
 		}
 
@@ -1088,5 +1055,114 @@ SVG;
 		}
 
 		return false;
+	}
+
+	/**
+	 * Determines whether or not WooCommerce is active.
+	 *
+	 * @return bool Whether or not WooCommerce is active.
+	 */
+	public static function is_woocommerce_active() {
+		return class_exists( 'Woocommerce' );
+	}
+
+	/**
+	 * Determines whether the plugin is active for the entire network.
+	 *
+	 * @return bool Whether or not the plugin is network-active.
+	 */
+	public static function is_plugin_network_active() {
+		static $network_active = null;
+
+		if ( ! is_multisite() ) {
+			return false;
+		}
+
+		// If a cached result is available, bail early.
+		if ( $network_active !== null ) {
+			return $network_active;
+		}
+
+		$network_active_plugins = wp_get_active_network_plugins();
+
+		// Consider MU plugins and network-activated plugins as network-active.
+		$network_active = strpos( wp_normalize_path( WPSEO_FILE ), wp_normalize_path( WPMU_PLUGIN_DIR ) ) === 0
+			|| in_array( WP_PLUGIN_DIR . '/' . WPSEO_BASENAME, $network_active_plugins, true );
+
+		return $network_active;
+	}
+
+	/**
+	 * Getter for the Adminl10n array. Applies the wpseo_admin_l10n filter.
+	 *
+	 * @return array The Adminl10n array.
+	 */
+	public static function get_admin_l10n() {
+		$wpseo_admin_l10n = array();
+		$wpseo_admin_l10n = array_merge( $wpseo_admin_l10n, WPSEO_Help_Center::get_translated_texts() );
+
+		$additional_entries = apply_filters( 'wpseo_admin_l10n', array() );
+		if ( is_array( $additional_entries ) ) {
+			$wpseo_admin_l10n = array_merge( $wpseo_admin_l10n, $additional_entries );
+		}
+
+		return $wpseo_admin_l10n;
+	}
+
+	/**
+	 * Retrieves the analysis worker log level. Defaults to errors only.
+	 *
+	 * Uses bool YOAST_SEO_DEBUG as flag to enable logging. Off equals ERROR.
+	 * Uses string YOAST_SEO_DEBUG_ANALYSIS_WORKER as log level for the Analysis
+	 * Worker. Defaults to INFO.
+	 * Can be: TRACE, DEBUG, INFO, WARN or ERROR.
+	 *
+	 * @return string The log level to use.
+	 */
+	public static function get_analysis_worker_log_level() {
+		if ( defined( 'YOAST_SEO_DEBUG' ) && YOAST_SEO_DEBUG ) {
+			return defined( 'YOAST_SEO_DEBUG_ANALYSIS_WORKER' ) ? YOAST_SEO_DEBUG_ANALYSIS_WORKER : 'INFO';
+		}
+
+		return 'ERROR';
+	}
+
+	/* ********************* DEPRECATED METHODS ********************* */
+
+	/**
+	 * Returns the language part of a given locale, defaults to english when the $locale is empty.
+	 *
+	 * @see        WPSEO_Language_Utils::get_language()
+	 *
+	 * @since      9.5
+	 *
+	 * @param string $locale The locale to get the language of.
+	 *
+	 * @return string The language part of the locale.
+	 */
+	public static function get_language( $locale ) {
+		_deprecated_function( __METHOD__, 'WPSEO 9.5', 'WPSEO_Language_Utils::get_language' );
+		return WPSEO_Language_Utils::get_language( $locale );
+	}
+
+	/**
+	 * Returns the user locale for the language to be used in the admin.
+	 *
+	 * WordPress 4.7 introduced the ability for users to specify an Admin language
+	 * different from the language used on the front end. This checks if the feature
+	 * is available and returns the user's language, with a fallback to the site's language.
+	 * Can be removed when support for WordPress 4.6 will be dropped, in favor
+	 * of WordPress get_user_locale() that already fallbacks to the site's locale.
+	 *
+	 * @see        WPSEO_Language_Utils::get_user_locale()
+	 *
+	 * @since      9.5
+	 *
+	 * @return string The locale.
+	 */
+	public static function get_user_locale() {
+		_deprecated_function( __METHOD__, 'WPSEO 9.5', 'WPSEO_Language_Utils::get_user_locale' );
+
+		return WPSEO_Language_Utils::get_user_locale();
 	}
 }

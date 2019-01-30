@@ -102,6 +102,8 @@ class Yoast_Dashboard_Widget {
 		}
 
 		wp_localize_script( WPSEO_Admin_Asset_Manager::PREFIX . 'dashboard-widget', 'wpseoDashboardWidgetL10n', $this->localize_dashboard_script() );
+		$yoast_components_l10n = new WPSEO_Admin_Asset_Yoast_Components_L10n();
+		$yoast_components_l10n->localize_script( WPSEO_Admin_Asset_Manager::PREFIX . 'dashboard-widget' );
 		$this->asset_manager->enqueue_script( 'dashboard-widget' );
 		$this->asset_manager->enqueue_style( 'wp-dashboard' );
 	}
@@ -124,6 +126,7 @@ class Yoast_Dashboard_Widget {
 				__( 'Indexability check by %1$s', 'wordpress-seo' ),
 				'Ryte'
 			),
+			'ryteEnabled'      => ( WPSEO_Options::get( 'onpage_indexability' ) === true ),
 			'ryte_fetch'       => __( 'Fetch the current status', 'wordpress-seo' ),
 			'ryte_analyze'     => __( 'Analyze entire site', 'wordpress-seo' ),
 			'ryte_fetch_url'   => esc_attr( add_query_arg( 'wpseo-redo-onpage', '1' ) ) . '#wpseo-dashboard-overview',
